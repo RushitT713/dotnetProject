@@ -1,0 +1,377 @@
+@import url('https://fonts.googleapis.com/css2?family=Bitcount:wght@100..900&family=Oswald:wght@200..700&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@font-face {
+    font-family: 'MyCustomFont';
+    src: url('/fonts/Hunterz-Regular.otf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+* {
+/*    font-family: 'MyCustomFont', sans-serif;*/
+    font-family: 'Poppins';
+}
+
+html {
+    font-size: 14px;
+    
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+/* Lobby */
+/*.roulette-menu {
+    height: 600px;
+    text-align:center;
+    color: #fff;
+    padding: 50px;
+    margin-top: 40px;
+    width: 40%;
+    border-radius: 15px;
+    background-image: url('../images/how-to-play-roulette.jpg');
+    background-size: cover;*/ /* Scale to cover the element */
+    /*background-position: center;*/ /* Center the image */
+    /*background-repeat: no-repeat;*/ /* Don’t repeat */
+    /*background-color: rgba(0, 0, 0, 0.5);
+}*/
+.roulette-menu {
+    position: relative;
+    height: 570px;
+    text-align: center;
+    color: #fff;
+    padding: 50px;
+    margin-top: 20px;
+    width: 40%;
+    border-radius: 15px;
+    background-image: url('../images/how-to-play-roulette.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+    z-index: 1;
+}
+
+    .roulette-menu::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.5); /* black overlay with 50% opacity */
+        z-index: 2;
+    }
+
+    .roulette-menu > * {
+        position: relative;
+        z-index: 3; /* Bring content above the overlay */
+    }
+
+input, button {
+    border-radius: 10px;
+    padding: 5px;
+}
+#playerList {
+    margin-left: -30px;
+    text-align: center;
+    list-style: none;
+}
+
+hr {
+    width: 45%;
+    height: 17px;
+    color: #fff;
+    margin: 10px auto;
+}
+
+/* Style your players list as a columned UL */
+/* site.css */
+
+#playerList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    column-gap: 2rem; /* space between columns */
+    column-count: 1; /* default to 1 column */
+}
+
+#playerList li {
+    break-inside: avoid; /* keep each name intact */
+    margin-bottom: 0.5rem;
+}
+
+.blackjack-menu {
+    position: relative;
+    float: left;
+    height: 570px;
+    text-align: center;
+    color: #fff;
+    padding: 50px;
+    margin-top: 20px;
+    width: 40%;
+    border-radius: 15px;
+    background-image: url('../images/blackjack-bet.webp');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+    z-index: 1;
+}
+
+    .blackjack-menu::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.5); /* black overlay with 50% opacity */
+        z-index: 2;
+    }
+
+    .blackjack-menu > * {
+        position: relative;
+        z-index: 3; /* Bring content above the overlay */
+    }
+
+/* Blackjack */
+.blackjack-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1rem;
+    background: #2d6a4f;
+    color: white;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.chip-selection .chips {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 1rem 0;
+}
+
+.chip {
+    background: #ffffff;
+    color: #000;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 50%;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.bet-actions button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    font-weight: bold;
+}
+
+.cards {
+    min-height: 50px;
+    border: 1px dashed #fff;
+    margin: 10px auto;
+    padding: 10px;
+}
+
+/* card-item initial and animated states */
+.card-item {
+    display: inline-block;
+    width: 50px;
+    height: 70px;
+    line-height: 70px;
+    text-align: center;
+    border: 1px solid #fff;
+    border-radius: 4px;
+    background: #fff;
+    color: #000;
+    font-weight: bold;
+    margin: 0 4px;
+    /* prepare for animation */
+    transform: translateY(-20px) scale(0.8);
+    opacity: 0;
+    font-size: 1rem;
+    position: relative;
+    perspective: 600px;
+}
+
+.red-suit {
+    color: #c00;
+}
+
+.black-suit {
+    color: #000;
+}
+
+.face-down {
+    background: repeating-linear-gradient( 45deg, #444, #444 2px, #888 2px, #888 4px );
+    color: #444;
+}
+/* when this class is added, we “drop” the card in */
+.card-dealt {
+    animation: dealCard 0.5s ease-out forwards;
+}
+
+@keyframes dealCard {
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+/* Generic chip button style */
+.btn-chip {
+    display: inline-block;
+    background: url('/images/chip-img.png') no-repeat center center;
+    background-size: contain;
+    width: 90px;
+    height: 90px;
+    border: none;
+    color: #000;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-shadow: 0 0 2px #fff;
+    cursor: pointer;
+    position: relative;
+    outline: none;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+    .btn-chip:active {
+        transform: scale(0.9);
+    }
+    .btn-chip:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 8px rgba(0,0,0,0.4);
+    }
+    /* Center the text within the chip */
+    .btn-chip span {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+/* Face-down flip container */
+.card-flip-container {
+    width: 50px;
+    height: 70px;
+}
+
+.flip-card {
+    width: 100%;
+    height: 100%;
+    perspective: 600px;
+}
+
+.flip-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.6s ease;
+}
+
+.flip-front, .flip-back {
+    position: absolute;
+    backface-visibility: hidden;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #fff;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.flip-front {
+    background: #888;
+    color: #444;
+}
+
+.flip-back {
+    background: #fff;
+    color: #000;
+    transform: rotateY(180deg);
+}
+
+/* Reveal class flips the card */
+.flip-inner.reveal {
+    transform: rotateY(180deg);
+}
+
+
+/* Deal-in animation (already in your CSS) */
+@keyframes dealCard {
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.card-dealt {
+    animation: dealCard 0.5s ease-out forwards;
+}
+
+@media (max-width: 768px) {
+    .casino-header h1 {
+        font-size: 2.5rem;
+    }
+
+    .casino-table {
+        height: 500px;
+        margin: 20px 10px;
+    }
+
+    .balance-section {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .chips-container {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .casino-chip {
+        width: 50px;
+        height: 50px;
+        font-size: 0.8rem;
+    }
+
+    .action-button {
+        width: 80px;
+        height: 80px;
+        font-size: 1rem;
+    }
+}
+
+/* make the action row buttons a bit tighter on small screens */
+@media (max-width: 576px) {
+    .player-actions .btn-lg {
+        padding: .375rem .6rem;
+        font-size: .9rem;
+    }
+}
+

@@ -1,0 +1,217 @@
+﻿@model dotnetProject.Models.BlackjackGame
+@{
+    ViewData["Title"] = "Blackjack";
+}
+
+<div class="blackjack-container">
+    <h2>Blackjack</h2>
+
+    <!-- Balance -->
+    <div class="balance-display mb-3">
+        <strong>Balance:</strong> ₹<span id="balance">@Model.PlayerBalance</span>
+    </div>
+
+    <!-- BETTING PHASE -->
+    <div id="betting-phase">
+        <h4>Select Chips to Bet</h4>
+        <div class="chips mb-2">
+            <button class="btn-chip" data-value="5"><span>₹5</span></button>
+            <button class="btn-chip" data-value="10"><span>₹10</span></button>
+            <button class="btn-chip" data-value="25"><span>₹25</span></button>
+            <button class="btn-chip" data-value="100"><span>₹100</span></button>
+            <button class="btn-chip" data-value="500"><span>₹500</span></button>
+            <button class="btn-chip" id="btn-all-in"><span>ALL-IN</span></button>
+
+        </div>
+        <div class="bet-display mb-2">
+            <strong>Current Bet:</strong> ₹<span id="current-bet">0</span>
+        </div>
+        <div class="bet-actions mb-4">
+            <button id="clear-bet" class="btn btn-secondary">Clear</button>
+            <button id="ready-bet" class="btn btn-primary">Ready</button>
+        </div>
+    </div>
+
+    <!-- GAME TABLE -->
+    <div id="game-table" style="display:none;">
+        <div class="row mb-3">
+            <div class="col text-center">
+                <h5>Dealer (<span id="dealer-score">?</span>)</h5>
+                <div id="dealer-cards" class="cards d-inline-block"></div>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col text-center">
+                <h5>You (<span id="player-score">0</span>)</h5>
+                <div id="player-cards" class="cards d-inline-block"></div>
+            </div>
+        </div>
+        <div class="player-actions text-center mb-3">
+            <button id="btn-hit" class="btn btn-warning" style="width:80px;height:80px;"><span>Hit</span></button>
+            <button id="btn-stand" class="btn btn-success" style="width:80px;height:80px;"><span>Stand</span></button>
+        </div>
+        <div id="result-message" class="mt-3 text-center fw-bold"></div>
+        <div class="mt-3 text-center">
+            <button id="btn-new-round" class="btn btn-outline-primary" style="display:none;">New Round</button>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        // -- utility to render cards array into a container --
+        function renderCards(containerId, cards, faceDownCount = 0) {
+          const div = document.getElementById(containerId);
+          div.innerHTML = '';
+          cards.forEach((c, i) => {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'card-item';
+
+            // Face-down card: use flip markup
+            if (faceDownCount > 0 && i >= cards.length - faceDownCount) {
+              cardEl.innerHTML = `
+                <div class="flip-card">
+                  <div class="flip-inner">
+                    <div class="flip-front">🂠</div>
+                    <div class="flip-back">${c}</div>
+                  </div>
+                </div>`;
+              cardEl.classList.add('card-flip-container');
+            }
+            else {
+              // Face-up: plain text with suit color class
+              cardEl.textContent = c;
+              const suit = c.slice(-1);
+              if (suit === '♥' || suit === '♦') {
+                cardEl.classList.add('red-suit');
+              } else {
+                cardEl.classList.add('black-suit');
+              }
+            }
+
+            div.appendChild(cardEl);
+            // trigger the deal animation
+            setTimeout(() => cardEl.classList.add('card-dealt'), 10);
+          });
+        }
+
+        let currentBet = 0;
+        const balanceEl = document.getElementById('balance');
+        const betEl     = document.getElementById('current-bet');
+
+        // -- Betting phase handlers --
+        document.querySelectorAll('.btn-chip[data-value]').forEach(chip => {
+          chip.addEventListener('click', () => {
+            const v = parseInt(chip.dataset.value, 10);
+            currentBet += v;
+            // Prevent exceeding balance
+            const bal = parseInt(balanceEl.textContent, 10);
+            if (currentBet > bal) {
+              alert('Insufficient balance!');
+              currentBet = bal;
+            }
+            betEl.textContent = currentBet;
+          });
+        });
+        document.getElementById('btn-all-in').addEventListener('click', () => {
+          const bal = parseInt(balanceEl.textContent, 10);
+          currentBet = bal;
+          betEl.textContent = currentBet;
+        });
+        document.getElementById('clear-bet').addEventListener('click', () => {
+          currentBet = 0;
+          document.getElementById('current-bet').textContent = '0';
+        });
+
+        // -- Ready/bet: call PlaceBet, show initial deal --
+        document.getElementById('ready-bet').addEventListener('click', async () => {
+                const bal = parseInt(balanceEl.textContent, 10);
+            if (currentBet <= 0) {
+              return alert('Please select a bet.');
+            }
+            if (currentBet > bal) {
+              return alert('Insufficient balance! Please adjust your bet.');
+            }
+              const form = new FormData(); form.append('amount', currentBet);
+              const res = await fetch('/Blackjack/PlaceBet', { method:'POST', body:form });
+              const data = await res.json();
+
+              // Switch to game table
+              document.getElementById('betting-phase').style.display = 'none';
+              document.getElementById('game-table').style.display = 'block';
+
+              // Render: player gets 2, dealer shows 1 + 1 face-down
+              renderCards('player-cards', data.playerHand, 0);
+              renderCards('dealer-cards', data.dealerHand, /*faceDownCount=*/1);
+
+              document.getElementById('player-score').textContent = data.playerScore;
+              document.getElementById('dealer-score').textContent = '?';
+              document.getElementById('balance').textContent = data.balance;
+        });
+
+        // -- Hit handler --
+        document.getElementById('btn-hit').addEventListener('click', async () => {
+          const res = await fetch('/Blackjack/Hit', { method:'POST' });
+          const data = await res.json();
+
+          renderCards('player-cards', data.playerHand, 0);
+          document.getElementById('player-score').textContent = data.playerScore;
+
+          if (data.isBust) {
+            document.getElementById('result-message').textContent = 'Bust! You lose.';
+            endRound();
+          }
+        });
+
+        // -- Stand handler --
+        document.getElementById('btn-stand').addEventListener('click', async () => {
+          const res = await fetch('/Blackjack/Stand', { method:'POST' });
+          const data = await res.json();
+
+        // after you fetch /Blackjack/Stand and render cards:
+        renderCards('dealer-cards', data.dealerHand, 0);
+        // Flip over any face-down cards with a delay
+        document.querySelectorAll('#dealer-cards .flip-inner').forEach(inner => {
+          setTimeout(() => inner.classList.add('reveal'), 200);
+        });
+
+        document.getElementById('dealer-score').textContent = data.dealerScore;
+        document.getElementById('result-message').textContent = data.result;
+        document.getElementById('balance').textContent = data.balance;
+        endRound();
+
+          // Reveal dealer fully and show score
+          // renderCards('dealer-cards', data.dealerHand, 0);
+          // document.getElementById('dealer-score').textContent = data.dealerScore;
+
+          // Show result, update balance
+          // document.getElementById('result-message').textContent = data.result;
+          // document.getElementById('balance').textContent = data.balance;
+          // endRound();
+        });
+
+        // -- End of round UI tweaks --
+        function endRound() {
+          document.getElementById('btn-hit').disabled = true;
+          document.getElementById('btn-stand').disabled = true;
+          document.getElementById('btn-new-round').style.display = 'inline-block';
+        }
+
+        // -- New Round: reset everything --
+        document.getElementById('btn-new-round').addEventListener('click', () => {
+          currentBet = 0;
+          document.getElementById('current-bet').textContent = '0';
+          document.getElementById('game-table').style.display = 'none';
+          document.getElementById('betting-phase').style.display = 'block';
+          document.getElementById('dealer-cards').innerHTML = '';
+          document.getElementById('player-cards').innerHTML = '';
+          document.getElementById('result-message').textContent = '';
+          document.getElementById('player-score').textContent = '0';
+          document.getElementById('dealer-score').textContent = '?';
+          document.getElementById('btn-hit').disabled = false;
+          document.getElementById('btn-stand').disabled = false;
+          document.getElementById('btn-new-round').style.display = 'none';
+        });
+    </script>
+}

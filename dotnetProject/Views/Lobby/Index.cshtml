@@ -1,0 +1,125 @@
+﻿@{
+    ViewData["Title"] = "Join or Create Lobby";
+}
+<link rel="stylesheet" href="~/css/site.css" />
+
+<div class="d-flex justify-content-center gap-4 mt-4">
+    <div class="roulette-menu">
+        <h1>Roulette FunPlay</h1>
+        <h2>@ViewData["Title"]</h2>
+
+        <div>
+            <label>Display Name (optional):</label>
+            <input type="text" id="playerName" placeholder="Player" />
+        </div>
+
+        <div style="margin-top: 10px;">
+            <button onclick="createLobby()">Create Lobby</button> <br />
+            <hr />
+            <input type="text" id="joinCode" placeholder="Lobby Code" style="margin-left: 10px;" />
+            <button onclick="joinLobby()">Join Lobby</button>
+        </div>
+
+        <hr />
+
+        <div id="lobbyCodeDisplay" style="font-weight: bold; margin-bottom: 10px;"></div>
+        <div id="status" style="color: green;"></div>
+
+        <h3>Players in Lobby</h3>
+        <ul id="playerList"></ul>
+
+        <button id="startBtn" onclick="startGame()" style="display:none; margin-top:10px;">
+            Start Game
+        </button>
+
+        <div id="gameStatus" style="color: blue; margin-top: 10px;"></div>
+    </div>
+    <!-- New Blackjack Menu -->
+    <div class="roulette-menu blackjack-menu">
+        <h1>Blackjack</h1>
+        <p>Beat the dealer in single-player.</p>
+        <a class="btn btn-light" href="/Blackjack">Play Blackjack</a>
+    </div>
+</div>
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/roulette")
+            .withAutomaticReconnect()
+            .build();
+
+        let currentLobbyCode = "";
+        let myConnectionId = null;
+        let lobbyCreatorId = null;
+
+        connection.on("SetConnectionId", id => {
+            myConnectionId = id;
+        });
+
+        connection.on("UpdatePlayerList", (players, creatorId) => {
+            lobbyCreatorId = creatorId;
+
+            // display the code
+            document.getElementById("lobbyCodeDisplay").innerText =
+                `Lobby Code: ${currentLobbyCode}`;
+
+            // update player list
+            const ul = document.getElementById('playerList');
+                ul.innerHTML = "";
+                players.forEach(name => {
+                const li = document.createElement('li');
+                li.textContent = name;
+                ul.appendChild(li);
+            });
+
+            // Calculate number of columns (5 names per column)
+            const columns = Math.ceil(players.length / 4) || 1;
+            ul.style.columnCount = columns;
+
+            // only creator sees Start Game
+            document.getElementById("startBtn").style.display =
+                (myConnectionId === lobbyCreatorId) ? "inline-block" : "none";
+        });
+
+        connection.on("GameStarted", lobbyCode => {
+            // only when the server says so do we go to the game
+            window.location = `/Game?lobbyCode=${lobbyCode}&playerName=${encodeURIComponent(document.getElementById("playerName").value || "Player")}`;
+        });
+
+        async function startConnection() {
+            try {
+                await connection.start();
+            } catch {
+                setTimeout(startConnection, 2000);
+            }
+        }
+        startConnection();
+
+        function generateLobbyCode() {
+            return Math.random().toString(36).substr(2, 5).toUpperCase();
+        }
+
+        async function createLobby() {
+            const name = document.getElementById("playerName").value || "Player";
+            currentLobbyCode = generateLobbyCode();
+            document.getElementById("lobbyCodeDisplay").innerText =
+                `Lobby Code: ${currentLobbyCode}`;
+            await connection.invoke("JoinLobby", currentLobbyCode, name);
+        }
+
+        async function joinLobby() {
+            const name = document.getElementById("playerName").value || "Player";
+            const code = document.getElementById("joinCode").value.toUpperCase();
+            if (!code) return alert("Enter a lobby code.");
+            currentLobbyCode = code;
+            document.getElementById("lobbyCodeDisplay").innerText =
+                `Lobby Code: ${currentLobbyCode}`;
+            await connection.invoke("JoinLobby", currentLobbyCode, name);
+        }
+
+        async function startGame() {
+            await connection.invoke("StartGame", currentLobbyCode);
+        }
+    </script>
+}

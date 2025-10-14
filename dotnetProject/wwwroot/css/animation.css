@@ -1,0 +1,38 @@
+﻿@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+/* Fast spin: linear, exactly 2 full rotations over 1s */
+@keyframes spin-fast {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(720deg);
+    }
+}
+
+.spin-fast {
+    animation: spin-fast 1s linear forwards;
+}
+
+/* Slow spin: ease-out, exactly the final extra degrees over 2s */
+@keyframes spin-slow {
+    from {
+        transform: rotate(var(--from-deg));
+    }
+
+    to {
+        transform: rotate(var(--to-deg));
+    }
+}
+
+.spin-slow {
+    animation: spin-slow 2s ease-out forwards;
+}

@@ -1,0 +1,475 @@
+﻿@{
+    ViewData["Title"] = "Roulette Table";
+    var lobbyCode = (string)ViewBag.LobbyCode;
+    var playerName = (string)ViewBag.PlayerName;
+}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+
+<style>
+    body {
+        background-color: #0C0A00;
+        color: #fff;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .card {
+        background-color: #0C0A00;
+        color: #fff;
+        border: 3px solid white;
+        margin: 0 10px 1rem 10px;
+    }
+
+    .card-header {
+        border-bottom: 3px solid white;
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .card-body {
+        padding: 1rem 0.5rem;
+    }
+
+    /* Compact wheel */
+    #wheelImage {
+        max-width: 350px;
+        transform-origin: 50% 50%;
+    }
+
+    /* Inline spin history */
+    #historyBox {
+        display: flex;
+        flex-wrap: wrap;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+        #historyBox li {
+            width: 36px;
+            height: 36px;
+            line-height: 36px;
+            text-align: center;
+            font-weight: bold;
+            margin: 2px;
+            border: 1px solid #666;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+    /* Betting board full-height & no scroll */
+    #betTable {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        #betTable td, #betTable th {
+            border: 1px solid #444;
+            padding: 5px;
+            font-size: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+        }
+
+            #betTable td:hover {
+                box-shadow: inset 0 0 0 3px yellow;
+            }
+
+        #betTable .green {
+            background: #28a745;
+            color: #fff;
+        }
+
+        #betTable .red {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        #betTable .black {
+            background: #343a40;
+            color: #fff;
+        }
+
+        #betTable .highlight {
+            box-shadow: inset 0 0 0 3px yellow;
+        }
+
+    /* Make those two cards equal height */
+    .card.h-100 {
+        height: 100%;
+    }
+
+    /* Slight padding adjustment so input-group buttons align nicely */
+    .input-group .form-control {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .input-group .btn {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+
+    /* Controls & timer inline */
+    #controlRow {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+        #controlRow input {
+            width: 80px;
+        }
+
+        #controlRow button {
+            flex-shrink: 0;
+        }
+    /* Balance history scrolling */
+    #balanceLog {
+        max-height: 100px;
+        overflow-y: auto;
+        padding-left: 0;
+        list-style: none;
+    }
+
+        #balanceLog li {
+            padding: 0.25rem;
+            font-size: 0.8rem;
+        }
+
+    /* Leaderboard compact */
+    #leaderboard td {
+        font-size: 0.8rem;
+        padding: 0.25rem;
+    }
+
+    /* Button styling to fill space and center icons */
+    #btnPlace, #btnSpin {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: calc(100% - 2.5rem); /* Adjust for input height and margin */
+        font-size: 1.5rem; /* Larger icon size */
+    }
+
+    /* Wheel spinning animation */
+    #wheelImage.spinning {
+        animation: spin 2s linear infinite;
+    }
+</style>
+
+<div class="container-fluid py-2">
+    <!-- Header -->
+    <div class="row mb-1">
+        <div class="col text-center"><h4>Roulette FunPlay</h4></div>
+    </div>
+
+    <div class="row g-1">
+        <!-- Left: Wheel + History -->
+        <div class="col-4">
+            <div class="card text-center">
+                <div class="card-header">Wheel</div>
+                <div class="card-body p-1 position-relative">
+                    <div id="pointer" style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 20px solid red; z-index: 10;"></div>
+                    <img src="~/images/european-roulette-wheel-removebg.png" id="wheelImage" class="img-fluid rounded-circle" alt="Wheel" />
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">Last Spins</div>
+                <div class="card-body p-1">
+                    <ul id="historyBox"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle: Betting Board -->
+        <div class="col-4">
+            <div class="card ">
+                <div class="card-header">Betting Board</div>
+                <div class="card-body p-2">
+                    <table id="betTable">
+                        <tr><td colspan="3" class="green" data-bettype="Single" data-betvalue="0">0</td></tr>
+                        @for (int row = 0; row < 12; row++)
+                        {
+                            <tr>
+                                @for (int col = 0; col < 3; col++)
+                                {
+                                    int num = 36 - (row * 3 + col);
+                                    if (num > 0)
+                                    {
+                                        var cls = new[] { 1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36 }.Contains(num)
+                                        ? "red" : "black";
+                                        <td class="@cls" data-bettype="Single" data-betvalue="@num">@num</td>
+                                    }
+                                }
+                            </tr>
+                        }
+                        <tr>
+                            <td class="black" data-bettype="Column" data-betvalue="1">2-1</td>
+                            <td class="black" data-bettype="Column" data-betvalue="2">2-2</td>
+                            <td class="black" data-bettype="Column" data-betvalue="3">2-3</td>
+                        </tr>
+                        <tr>
+                            <td class="black" data-bettype="Dozen" data-betvalue="1">1st 12</td>
+                            <td class="black" data-bettype="Dozen" data-betvalue="2">2nd 12</td>
+                            <td class="black" data-bettype="Dozen" data-betvalue="3">3rd 12</td>
+                        </tr>
+                        <tr>
+                            <td class="black" data-bettype="Even" data-betvalue="Even">Even</td>
+                            <td class="black" data-bettype="Odd" data-betvalue="Odd">Odd</td>
+                            <td class="black" data-bettype="Red" data-betvalue="Red">Red</td>
+                        </tr>
+                        <tr>
+                            <td class="black" data-bettype="Black" data-betvalue="Black">Black</td>
+                            <td class="black" data-bettype="Low" data-betvalue="Low">1–18</td>
+                            <td class="black" data-bettype="High" data-betvalue="High">19–36</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Controls, History & Leaderboard -->
+        <div class="col-4 d-flex flex-column">
+            <div class="row gx-2 mb-2">
+                <!-- Game Info -->
+                <div class="col-6">
+                    <div class="card h-100">
+                        <div class="card-header">Game Info</div>
+                        <div class="card-body">
+                            <p class="mb-1"><strong>Lobby:</strong> @lobbyCode</p>
+                            <p class="mb-1"><strong>Player:</strong> @playerName</p>
+                            <p><strong>Balance:</strong> ₹<span id="balance">5000</span></p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Timer & Bet -->
+                <div class="col-6">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>Timer</span>
+                            <b><span id="timer">--s</span><span> s</span></b>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <input type="number" id="betAmount" class="form-control" placeholder="₹ Amount" style="width: 100%;" />
+                            </div>
+                            <div class="d-flex gap-2 h-100">
+                                <button id="btnPlace" class="btn btn-primary flex-fill" onclick="placeBet()" disabled>
+                                    <i class="fas fa-coins"></i>
+                                </button>
+                                <button id="btnSpin" class="btn btn-success flex-fill" onclick="spinWheel()" disabled>
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-2 flex-grow-1 overflow-auto balanceHistory">
+                <div class="card-header">Balance History</div>
+                <div class="card-body p-1">
+                    <ul id="balanceLog"></ul>
+                </div>
+            </div>
+
+            <div class="card flex-grow-1 overflow-auto">
+                <div class="card-header">Leaderboard</div>
+                <div class="card-body p-1">
+                    <table class="table mb-0">
+                        <thead><tr><th>Player</th><th>Bal</th></tr></thead>
+                        <tbody id="leaderboard"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script>
+        const { HubConnectionBuilder, HttpTransportType, LogLevel, HubConnectionState } = signalR;
+        const connection = new HubConnectionBuilder()
+            .withUrl("/hubs/roulette", {
+                transport: HttpTransportType.WebSockets | HttpTransportType.LongPolling
+            })
+            .withAutomaticReconnect()
+            .configureLogging(LogLevel.Information)
+            .build();
+
+        let selectedBetType = null, selectedBetValue = null;
+        let lastKnownBalance = 5000;
+        const redSet = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+        const wheelOrder = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+        let spinStartTime;
+
+        function updateHistory(spins) {
+            const ul = document.getElementById('historyBox');
+            ul.innerHTML = '';
+            spins.forEach(n => {
+                const li = document.createElement('li');
+                li.textContent = n;
+                li.classList.add(n === 0 ? 'text-success' : redSet.has(n) ? 'text-danger' : 'text-light');
+                ul.appendChild(li);
+            });
+        }
+
+        document.querySelectorAll('#betTable td').forEach(cell => {
+            cell.addEventListener('click', () => {
+                const type = cell.dataset.bettype, value = cell.dataset.betvalue;
+                if (selectedBetType === type && selectedBetValue === value) {
+                    document.querySelectorAll('#betTable .highlight').forEach(c => c.classList.remove('highlight'));
+                    selectedBetType = selectedBetValue = null;
+                    document.getElementById('btnPlace').disabled = true;
+                    return;
+                }
+                document.querySelectorAll('#betTable .highlight').forEach(c => c.classList.remove('highlight'));
+                document.querySelectorAll('#betTable td').forEach(c => {
+                    const t = c.dataset.bettype, v = c.dataset.betvalue;
+                    let match = false;
+                    const num = parseInt(v);
+                    switch (type) {
+                        case 'Single': match = (t === 'Single' && v === value); break;
+                        case 'Odd': match = (t === 'Single' && num % 2 === 1 && num !== 0) || (t === 'Odd'); break;
+                        case 'Even': match = (t === 'Single' && num % 2 === 0 && num !== 0) || (t === 'Even'); break;
+                        case 'Red': match = (t === 'Single' && redSet.has(num)) || (t === 'Red'); break;
+                        case 'Black': match = (t === 'Single' && !redSet.has(num) && num !== 0) || (t === 'Black'); break;
+                        case 'Low': match = (t === 'Single' && num >= 1 && num <= 18) || (t === 'Low'); break;
+                        case 'High': match = (t === 'Single' && num >= 19 && num <= 36) || (t === 'High'); break;
+                        case 'Column':
+                            if (t === 'Single') {
+                                if (value === '1' && num % 3 === 0 && num !== 0) match = true;
+                                if (value === '2' && num % 3 === 2) match = true;
+                                if (value === '3' && num % 3 === 1) match = true;
+                            }
+                            if (t === 'Column' && v === value) match = true;
+                            break;
+                        case 'Dozen':
+                            if (t === 'Single') {
+                                if (value === '1' && num >= 1 && num <= 12) match = true;
+                                if (value === '2' && num > 12 && num <= 24) match = true;
+                                if (value === '3' && num > 24 && num <= 36) match = true;
+                            }
+                            if (t === 'Dozen' && v === value) match = true;
+                            break;
+                    }
+                    if (match) c.classList.add('highlight');
+                });
+                selectedBetType = type;
+                selectedBetValue = value;
+                document.getElementById('btnPlace').disabled = false;
+            });
+        });
+
+        connection.on("InitState", (h, l) => {
+            updateHistory(h);
+            updateLeaderboard(l);
+            startRound();
+        });
+
+        connection.on("RoundResult", (n, h, l) => {
+            updateHistory(h);
+            updateLeaderboard(l);
+            updateBalanceHistory(l);
+
+            const wheel = document.getElementById('wheelImage');
+            const timeElapsed = (Date.now() - spinStartTime) / 1000; // in seconds
+            const animationDuration = 2; // seconds per rotation
+            const speed = 360 / animationDuration; // degrees per second
+            const currentAngle = (timeElapsed * speed) % 360;
+            const winningNumber = n;
+            const index = wheelOrder.indexOf(winningNumber);
+            const theta = (index / 37) * 360;
+            const nRotations = Math.ceil((currentAngle + theta) / 360);
+            const finalAngle = nRotations * 360 - theta;
+
+            wheel.classList.remove('spinning');
+            wheel.style.transition = 'none';
+            wheel.style.transform = `rotate(${currentAngle}deg)`;
+            requestAnimationFrame(() => {
+                wheel.style.transition = 'transform 2s ease-out';
+                wheel.style.transform = `rotate(${finalAngle}deg)`;
+            });
+
+            setTimeout(() => {
+                startRound();
+            }, 2000);
+        });
+
+        async function startConnection() {
+            if (connection.state === HubConnectionState.Disconnected) {
+                await connection.start();
+                await connection.invoke("JoinLobby", "@lobbyCode", "@playerName");
+                await connection.invoke("GetLobbyState", "@lobbyCode");
+            }
+        }
+        startConnection();
+
+        function updateLeaderboard(lb) {
+            const tb = document.getElementById('leaderboard');
+            tb.innerHTML = '';
+            lb.forEach(i => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${i.name}</td><td>₹${i.balance}</td>`;
+                tb.appendChild(tr);
+                if (i.name === "@playerName") document.getElementById('balance').innerText = i.balance;
+            });
+        }
+
+        function updateBalanceHistory(lb) {
+            const me = lb.find(p => p.name === "@playerName");
+            if (!me) return;
+            const diff = me.balance - lastKnownBalance;
+            if (diff !== 0) {
+                const li = document.createElement('li');
+                li.textContent = diff > 0 ? `+ ₹${diff} win` : `- ₹${Math.abs(diff)} loss`;
+                li.classList.add(diff > 0 ? 'text-success' : 'text-danger');
+                document.getElementById('balanceLog').prepend(li);
+                lastKnownBalance = me.balance;
+            }
+        }
+
+        async function placeBet() {
+            const amt = parseFloat(document.getElementById('betAmount').value);
+            const bal = parseFloat(document.getElementById('balance').innerText);
+            if (isNaN(amt) || amt <= 0) return alert('Enter valid amount');
+            if (amt > bal) return alert('Insufficient balance');
+            document.getElementById('btnPlace').disabled = true;
+            await connection.invoke("PlaceBet", "@lobbyCode", {
+                BetType: selectedBetType,
+                BetValue: selectedBetValue,
+                Amount: amt
+            });
+        }
+
+        async function spinWheel() {
+            const wheel = document.getElementById('wheelImage');
+            spinStartTime = Date.now();
+            wheel.classList.add('spinning');
+            document.getElementById('btnSpin').disabled = true;
+            document.getElementById('btnPlace').disabled = true;
+            await connection.invoke("SpinWheel", "@lobbyCode");
+        }
+
+        let timerId;
+        function startRound() {
+            clearInterval(timerId);
+            let t = 30;
+            document.getElementById('timer').innerText = t;
+            document.getElementById('btnPlace').disabled = true;
+            document.getElementById('btnSpin').disabled = true;
+            timerId = setInterval(() => {
+                t--;
+                document.getElementById('timer').innerText = t;
+                if (t <= 0) {
+                    clearInterval(timerId);
+                    document.getElementById('btnSpin').disabled = false;
+                }
+            }, 1000);
+        }
+    </script>
+}
