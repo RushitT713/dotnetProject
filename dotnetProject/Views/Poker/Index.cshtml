@@ -1,0 +1,828 @@
+﻿@{
+    ViewData["Title"] = "Texas Hold'em Poker";
+    var lobbyCode = (string)ViewBag.LobbyCode;
+    var playerName = (string)ViewBag.PlayerName;
+}
+<link rel="stylesheet" href="~/css/animation.css" />
+<link rel="stylesheet" href="~/css/site.css" />
+
+<style>
+    .poker-container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 2rem;
+        position: relative;
+    }
+
+    .poker-lobby-info {
+        max-width: 800px;
+        margin: 2rem auto;
+        background: var(--bg-card);
+        border: 2px solid var(--border);
+        border-radius: 20px;
+        padding: 3rem;
+        text-align: center;
+    }
+
+    .lobby-code-display {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        letter-spacing: 5px;
+        margin-bottom: 2rem;
+        font-family: 'Courier New', monospace;
+    }
+
+    .poker-table {
+        position: relative;
+        width: 1000px;
+        height: 600px;
+        margin: 0 auto 2rem;
+        background: linear-gradient(135deg, #1a4d2e 0%, #0f2818 100%);
+        border-radius: 300px;
+        border: 12px solid #8B4513;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 0 50px rgba(0, 0, 0, 0.3);
+    }
+
+    .table-felt {
+        position: absolute;
+        inset: 20px;
+        border-radius: 280px;
+        background: radial-gradient(ellipse at center, #2d5a3d 0%, #1a4d2e 100%);
+        border: 3px solid rgba(139, 69, 19, 0.3);
+    }
+
+    .community-cards-area {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        gap: 0.5rem;
+        padding: 1.5rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 12px;
+        min-width: 400px;
+        justify-content: center;
+    }
+
+    .pot-display {
+        position: absolute;
+        top: 35%;
+        left: 50%;
+        transform: translate(-50%, -100%);
+        background: rgba(212, 175, 55, 0.9);
+        padding: 0.75rem 2rem;
+        border-radius: 30px;
+        font-weight: 700;
+        font-size: 1.5rem;
+        color: var(--bg-dark);
+        box-shadow: 0 4px 20px rgba(212, 175, 55, 0.5);
+    }
+
+    .player-seat {
+        position: absolute;
+        width: 180px;
+    }
+
+    .player-card {
+        background: var(--bg-card);
+        border: 2px solid var(--border);
+        border-radius: 16px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .player-seat.active .player-card {
+        border-color: var(--primary);
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
+        transform: scale(1.05);
+    }
+
+    .player-seat.current-turn .player-card {
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .player-seat.dealer .player-card::before {
+        content: '🎯';
+        position: absolute;
+        top: -15px;
+        right: -15px;
+        background: var(--primary);
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        border: 3px solid var(--bg-dark);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .player-seat.folded .player-card {
+        opacity: 0.4;
+        filter: grayscale(100%);
+    }
+
+    .player-name {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .player-balance {
+        color: var(--primary);
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .player-bet {
+        background: rgba(212, 175, 55, 0.2);
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        color: var(--primary);
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .player-hole-cards {
+        display: flex;
+        gap: 0.25rem;
+        justify-content: center;
+        margin-top: 0.75rem;
+    }
+
+    .playing-card {
+        width: 50px;
+        height: 70px;
+        background: white;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .community-card {
+        width: 70px;
+        height: 98px;
+        background: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: 700;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        animation: dealCard 0.5s ease-out;
+    }
+
+    .card-back {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: transparent;
+    }
+
+    .card-hearts, .card-diamonds {
+        color: #DC2626;
+    }
+
+    .card-clubs, .card-spades {
+        color: #1F2937;
+    }
+
+    .player-seat-0 {
+        bottom: -80px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .player-seat-1 {
+        bottom: 50px;
+        left: 50px;
+    }
+
+    .player-seat-2 {
+        top: 150px;
+        left: -100px;
+    }
+
+    .player-seat-3 {
+        top: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .player-seat-4 {
+        top: 150px;
+        right: -100px;
+    }
+
+    .player-seat-5 {
+        bottom: 50px;
+        right: 50px;
+    }
+
+    .player-seat-6 {
+        top: 50%;
+        right: -120px;
+        transform: translateY(-50%);
+    }
+
+    .controls-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 2rem;
+        margin: 2rem auto;
+        max-width: 1000px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+
+    .poker-btn {
+        padding: 1rem 2rem;
+        border: 2px solid;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        min-width: 120px;
+    }
+
+        .poker-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .poker-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+    .btn-fold {
+        background: transparent;
+        border-color: var(--danger);
+        color: var(--danger);
+    }
+
+        .btn-fold:hover:not(:disabled) {
+            background: var(--danger);
+            color: white;
+        }
+
+    .btn-check {
+        background: transparent;
+        border-color: var(--text-secondary);
+        color: var(--text-secondary);
+    }
+
+        .btn-check:hover:not(:disabled) {
+            background: var(--text-secondary);
+            color: white;
+        }
+
+    .btn-call {
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        border-color: #3B82F6;
+        color: white;
+    }
+
+    .btn-raise {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        border-color: var(--primary);
+        color: var(--bg-dark);
+    }
+
+    .btn-allin {
+        background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+        border-color: #DC2626;
+        color: white;
+    }
+
+    .raise-input-group {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .raise-input {
+        width: 200px;
+        padding: 0.75rem 1rem;
+        background: var(--bg-elevated);
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-weight: 600;
+        text-align: center;
+    }
+
+        .raise-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+    .game-info-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .info-card {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    .info-label {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-value {
+        color: var(--primary);
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .game-log {
+        max-height: 200px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: var(--bg-elevated);
+        border-radius: 12px;
+        margin-top: 1.5rem;
+    }
+
+    .game-log-entry {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+        .game-log-entry:last-child {
+            border-bottom: none;
+        }
+
+    .showdown-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(10, 14, 26, 0.95);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .showdown-content {
+        background: var(--bg-card);
+        border: 2px solid var(--primary);
+        border-radius: 24px;
+        padding: 3rem;
+        max-width: 600px;
+        text-align: center;
+        animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    .showdown-winner {
+        font-size: 3rem;
+        color: var(--primary);
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .showdown-hand {
+        font-size: 1.5rem;
+        color: var(--text-primary);
+        margin-bottom: 2rem;
+    }
+
+    .showdown-results {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .showdown-player {
+        background: var(--bg-elevated);
+        padding: 1rem;
+        border-radius: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    #pokerPlayerList {
+        list-style: none;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 2rem 0;
+    }
+
+        #pokerPlayerList li {
+            padding: 0.75rem 1rem;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            color: whitesmoke;
+        }
+
+            #pokerPlayerList li:hover {
+                border-color: var(--primary);
+                transform: translateY(-2px);
+            }
+</style>
+
+<div class="poker-container">
+    <div id="reconnect-loader" style="display: flex;">
+        <div class="spinner"></div>
+        <p id="loader-text">Connecting to poker table...</p>
+    </div>
+
+    <!-- Lobby Screen -->
+    <div id="poker-lobby" style="display: none;">
+        <div class="poker-lobby-info fade-in">
+            <h2 style="font-family: 'Playfair Display', serif; font-size: 2.5rem; color: var(--primary); margin-bottom: 2rem;">🃏 Poker Table</h2>
+            <div class="lobby-code-display">@lobbyCode</div>
+            <h4 style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px;">Players at Table</h4>
+            <ul id="pokerPlayerList"></ul>
+            <button id="btn-start-poker" class="btn btn-primary" style="display: none; margin-top: 2rem; min-width: 200px;" onclick="startGame()">
+                Start Game
+            </button>
+            <p style="color: var(--text-secondary); margin-top: 1.5rem; font-size: 0.9rem;">Waiting for host to start the game...</p>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="poker-game" style="display: none;">
+        <div class="poker-table">
+            <div class="table-felt">
+                <div class="pot-display">
+                    POT: ₹<span id="pot-amount">0</span>
+                </div>
+
+                <div class="community-cards-area" id="community-cards">
+                    <!-- Community cards will be added here -->
+                </div>
+
+                <!-- Player seats -->
+                <div class="player-seat player-seat-0" id="seat-0"></div>
+                <div class="player-seat player-seat-1" id="seat-1"></div>
+                <div class="player-seat player-seat-2" id="seat-2"></div>
+                <div class="player-seat player-seat-3" id="seat-3"></div>
+                <div class="player-seat player-seat-4" id="seat-4"></div>
+                <div class="player-seat player-seat-5" id="seat-5"></div>
+                <div class="player-seat player-seat-6" id="seat-6"></div>
+            </div>
+        </div>
+
+        <div class="controls-panel">
+            <div id="game-controls" style="display: none;">
+                <div class="raise-input-group">
+                    <label style="color: var(--text-secondary); font-weight: 600;">Raise Amount:</label>
+                    <input type="number" id="raise-amount" class="raise-input" placeholder="Enter amount" min="0" />
+                </div>
+
+                <div class="action-buttons">
+                    <button class="poker-btn btn-fold" onclick="playerAction('fold')" id="btn-fold">
+                        🚫 Fold
+                    </button>
+                    <button class="poker-btn btn-check" onclick="playerAction('check')" id="btn-check">
+                        ✋ Check
+                    </button>
+                    <button class="poker-btn btn-call" onclick="playerAction('call')" id="btn-call">
+                        📞 Call <span id="call-amount"></span>
+                    </button>
+                    <button class="poker-btn btn-raise" onclick="playerAction('raise')" id="btn-raise">
+                        ⬆️ Raise
+                    </button>
+                    <button class="poker-btn btn-allin" onclick="playerAction('allin')" id="btn-allin">
+                        💰 All In
+                    </button>
+                </div>
+
+                <div class="game-info-grid">
+                    <div class="info-card">
+                        <div class="info-label">Your Balance</div>
+                        <div class="info-value">₹<span id="my-balance">5000</span></div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Current Phase</div>
+                        <div class="info-value" id="game-phase">Waiting</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Current Bet</div>
+                        <div class="info-value">₹<span id="current-bet">0</span></div>
+                    </div>
+                </div>
+
+                <div class="game-log" id="game-log">
+                    <div class="info-label" style="margin-bottom: 1rem;">Game Activity</div>
+                    <!-- Log entries will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="showdown-overlay" class="showdown-overlay" style="display: none;">
+    <div class="showdown-content">
+        <div class="showdown-winner" id="showdown-winner"></div>
+        <div class="showdown-hand" id="showdown-hand"></div>
+        <div class="showdown-results" id="showdown-results"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/poker")
+            .withAutomaticReconnect()
+            .build();
+
+        let myPlayerName = "@playerName";
+        let currentGameState = null;
+        let isMyTurn = false;
+        let myConnectionId = null;
+        let creatorConnectionId = null;
+
+        connection.on("SetConnectionId", id => {
+            myConnectionId = id;
+        });
+
+        connection.on("UpdatePlayerList", (players, creatorId) => {
+            creatorConnectionId = creatorId;
+            const ul = document.getElementById('pokerPlayerList');
+            ul.innerHTML = "";
+            players.forEach(name => {
+                const li = document.createElement('li');
+                li.textContent = name;
+                ul.appendChild(li);
+            });
+
+            document.getElementById('btn-start-poker').style.display =
+                (myConnectionId === creatorConnectionId) ? "block" : "none";
+        });
+
+        connection.on("GameStarted", () => {
+            document.getElementById('poker-lobby').style.display = 'none';
+            document.getElementById('poker-game').style.display = 'block';
+        });
+
+        connection.on("GameState", (state) => {
+            currentGameState = state;
+            updateUI(state);
+        });
+
+        connection.on("YourTurn", () => {
+            isMyTurn = true;
+            document.getElementById('game-controls').style.display = 'block';
+            updateActionButtons();
+            showNotification("It's your turn!", 'success');
+        });
+
+        connection.on("PlayerJoined", (message) => {
+            showNotification(message, 'success');
+        });
+
+        connection.on("PlayerDisconnected", (playerName) => {
+            showNotification(`${playerName} disconnected`, 'error');
+        });
+
+        connection.on("RoundWinner", (data) => {
+            showNotification(`${data.winner} wins ₹${data.amount}!`, 'success');
+        });
+
+        connection.on("ShowdownResult", (data) => {
+            showShowdown(data);
+        });
+
+        connection.on("Error", (message) => {
+            showNotification(message, 'error');
+        });
+
+        async function startConnection() {
+            try {
+                await connection.start();
+                await connection.invoke("JoinPokerLobby", "@lobbyCode", myPlayerName);
+                document.getElementById('reconnect-loader').style.display = 'none';
+                document.getElementById('poker-lobby').style.display = 'block';
+            } catch (err) {
+                console.error(err);
+                setTimeout(startConnection, 2000);
+            }
+        }
+
+        async function startGame() {
+            await connection.invoke("StartPokerGame", "@lobbyCode");
+        }
+
+        async function playerAction(action) {
+            if (!isMyTurn) {
+                showNotification("It's not your turn!", 'error');
+                return;
+            }
+
+            let amount = 0;
+            if (action === 'raise') {
+                amount = parseFloat(document.getElementById('raise-amount').value) || 0;
+                if (amount <= currentGameState.currentBet) {
+                    showNotification("Raise amount must be higher than current bet", 'error');
+                    return;
+                }
+            }
+
+            isMyTurn = false;
+            document.getElementById('game-controls').style.display = 'none';
+
+            await connection.invoke("PlayerAction", "@lobbyCode", {
+                Action: action,
+                Amount: amount
+            });
+        }
+
+        function updateUI(state) {
+            document.getElementById('pot-amount').textContent = state.pot.toFixed(0);
+            document.getElementById('current-bet').textContent = state.currentBet.toFixed(0);
+            document.getElementById('game-phase').textContent = state.phase;
+
+            const communityCardsDiv = document.getElementById('community-cards');
+            communityCardsDiv.innerHTML = '';
+            state.communityCards.forEach(card => {
+                const cardEl = createCardElement(card, true);
+                communityCardsDiv.appendChild(cardEl);
+            });
+
+            state.players.forEach((player, index) => {
+                const seatDiv = document.getElementById(`seat-${player.seatPosition}`);
+                if (!seatDiv) return;
+
+                const isCurrentPlayer = player.name === myPlayerName;
+                const isCurrentTurn = index === state.currentPlayerIndex;
+
+                let seatClasses = 'player-seat';
+                if (isCurrentPlayer) seatClasses += ' active';
+                if (player.hasFolded) seatClasses += ' folded';
+                if (player.isDealer) seatClasses += ' dealer';
+                if (isCurrentTurn && !player.hasFolded) seatClasses += ' current-turn';
+
+                seatDiv.className = `${seatClasses} player-seat-${player.seatPosition}`;
+
+                seatDiv.innerHTML = `
+                    <div class="player-card">
+                        <div class="player-name">${player.name}</div>
+                        <div class="player-balance">₹${player.balance.toFixed(0)}</div>
+                        ${player.currentBet > 0 ? `<div class="player-bet">Bet: ₹${player.currentBet}</div>` : ''}
+                        ${player.isAllIn ? '<div class="player-bet" style="background: var(--danger); color: white;">ALL IN</div>' : ''}
+                        <div class="player-hole-cards">
+                            ${createCardElement(player.cards[0], false).outerHTML}
+                            ${createCardElement(player.cards[1], false).outerHTML}
+                        </div>
+                    </div>
+                `;
+
+                if (isCurrentPlayer) {
+                    document.getElementById('my-balance').textContent = player.balance.toFixed(0);
+                }
+            });
+
+            const logDiv = document.getElementById('game-log');
+            logDiv.innerHTML = '<div class="info-label" style="margin-bottom: 1rem;">Game Activity</div>';
+            state.gameLog.forEach(entry => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'game-log-entry';
+                entryDiv.textContent = entry;
+                logDiv.appendChild(entryDiv);
+            });
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function createCardElement(cardStr, isCommunity) {
+            const div = document.createElement('div');
+            div.className = isCommunity ? 'community-card' : 'playing-card';
+
+            if (cardStr === '??') {
+                div.classList.add('card-back');
+                div.textContent = '🂠';
+                return div;
+            }
+
+            const rank = cardStr[0];
+            const suit = cardStr[1];
+            const suitSymbols = { 'H': '♥', 'D': '♦', 'C': '♣', 'S': '♠' };
+            const rankDisplay = rank === 'T' ? '10' : rank;
+
+            div.textContent = `${rankDisplay}${suitSymbols[suit]}`;
+
+            if (suit === 'H' || suit === 'D') {
+                div.classList.add('card-hearts');
+            } else {
+                div.classList.add('card-clubs');
+            }
+
+            return div;
+        }
+
+        function updateActionButtons() {
+            if (!currentGameState || !isMyTurn) return;
+
+            const me = currentGameState.players.find(p => p.name === myPlayerName);
+            if (!me) return;
+
+            const canCheck = me.currentBet === currentGameState.currentBet;
+            const callAmount = currentGameState.currentBet - me.currentBet;
+
+            document.getElementById('btn-check').disabled = !canCheck;
+            document.getElementById('btn-call').disabled = canCheck || me.balance === 0;
+            document.getElementById('call-amount').textContent = canCheck ? '' : `₹${callAmount}`;
+            document.getElementById('btn-raise').disabled = me.balance <= callAmount;
+            document.getElementById('btn-allin').disabled = me.balance === 0;
+            document.getElementById('raise-amount').max = me.balance + me.currentBet;
+            document.getElementById('raise-amount').min = currentGameState.currentBet + 1;
+        }
+
+        function showShowdown(data) {
+            const overlay = document.getElementById('showdown-overlay');
+            overlay.style.display = 'flex';
+
+            document.getElementById('showdown-winner').textContent = `🎉 ${data.winner} Wins! 🎉`;
+            document.getElementById('showdown-hand').textContent = data.hand;
+
+            const resultsDiv = document.getElementById('showdown-results');
+            resultsDiv.innerHTML = '';
+            data.results.forEach(result => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'showdown-player';
+                playerDiv.innerHTML = `
+                    <span style="font-weight: 700;">${result.playerName}</span>
+                    <span style="color: var(--text-secondary);">${result.hand}</span>
+                `;
+                resultsDiv.appendChild(playerDiv);
+            });
+
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 5000);
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                background: ${type === 'error' ? 'var(--danger)' : 'var(--success)'};
+                color: white;
+                border-radius: 12px;
+                font-weight: 600;
+                z-index: 9999;
+                animation: fadeIn 0.3s ease;
+                box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        startConnection();
+    </script>
+}

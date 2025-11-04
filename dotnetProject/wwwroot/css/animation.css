@@ -1,4 +1,76 @@
-﻿@keyframes spin {
+﻿@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 40px rgba(212, 175, 55, 0.8);
+    }
+}
+
+@keyframes dealCard {
+    from {
+        transform: translateY(-50px) scale(0);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes popIn {
+    0% {
+        transform: translate(-50%, -50%) scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+
+    70% {
+        transform: translate(-50%, -50%) scale(1.1) rotate(10deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes popOut {
+    to {
+        transform: translate(-50%, -50%) scale(0) rotate(180deg);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+
+@keyframes spin {
     from {
         transform: rotate(0deg);
     }

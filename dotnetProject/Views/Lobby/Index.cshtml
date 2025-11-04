@@ -1,49 +1,181 @@
 ﻿@{
-    ViewData["Title"] = "Join or Create Lobby";
+    ViewData["Title"] = "Casino Lobby";
 }
+<link rel="stylesheet" href="~/css/animation.css" />
 <link rel="stylesheet" href="~/css/site.css" />
-
-<div class="d-flex justify-content-center gap-4 mt-4">
-    <div class="roulette-menu">
-        <h1>Roulette FunPlay</h1>
-        <h2>@ViewData["Title"]</h2>
-
-        <div>
-            <label>Display Name (optional):</label>
-            <input type="text" id="playerName" placeholder="Player" />
-        </div>
-
-        <div style="margin-top: 10px;">
-            <button onclick="createLobby()">Create Lobby</button> <br />
-            <hr />
-            <input type="text" id="joinCode" placeholder="Lobby Code" style="margin-left: 10px;" />
-            <button onclick="joinLobby()">Join Lobby</button>
-        </div>
-
-        <hr />
-
-        <div id="lobbyCodeDisplay" style="font-weight: bold; margin-bottom: 10px;"></div>
-        <div id="status" style="color: green;"></div>
-
-        <h3>Players in Lobby</h3>
-        <ul id="playerList"></ul>
-
-        <button id="startBtn" onclick="startGame()" style="display:none; margin-top:10px;">
-            Start Game
-        </button>
-
-        <div id="gameStatus" style="color: blue; margin-top: 10px;"></div>
+<div class="lobby-container">
+    <div class="lobby-header fade-in">
+        <h1>Welcome to FunPlay Casino</h1>
+        <p>Choose your game and start winning</p>
     </div>
-    <!-- New Blackjack Menu -->
-    <div class="roulette-menu blackjack-menu">
-        <h1>Blackjack</h1>
-        <p>Beat the dealer in single-player.</p>
-        <a class="btn btn-light" href="/Blackjack">Play Blackjack</a>
+
+    <div class="games-grid" style="grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));">
+        <!-- Poker Card -->
+        <div class="game-card fade-in">
+            <div class="game-image" style="background-image: url('https://images.unsplash.com/photo-1511193311914-0346f16efe90?w=800'); background-size: cover; background-position: center; height: 280px;"></div>
+            <div class="game-content">
+                <h2 class="game-title">Texas Hold'em Poker</h2>
+                <p class="game-subtitle">Compete in multiplayer poker tournaments</p>
+
+                <div class="game-features">
+                    <span class="feature-badge">🎮 Up to 7 Players</span>
+                    <span class="feature-badge">🃏 Texas Hold'em</span>
+                    <span class="feature-badge">🏆 Real Competition</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="playerNamePoker">Display Name</label>
+                    <input type="text"
+                           id="playerNamePoker"
+                           class="form-control"
+                           placeholder="Enter your name" />
+                </div>
+
+                <button onclick="createPokerLobby()" class="btn btn-primary btn-block">
+                    Create Poker Table
+                </button>
+
+                <div class="divider">
+                    <span>OR</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="joinPokerCode">Table Code</label>
+                    <input type="text"
+                           id="joinPokerCode"
+                           class="form-control"
+                           placeholder="Enter 5-digit code"
+                           maxlength="5"
+                           style="text-transform: uppercase;" />
+                </div>
+
+                <button onclick="joinPokerLobby()" class="btn btn-secondary btn-block">
+                    Join Poker Table
+                </button>
+
+                <div style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-elevated); border-radius: 12px; border: 1px solid var(--border);">
+                    <h5 style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Quick Rules</h5>
+                    <ul style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.8; padding-left: 1.25rem;">
+                        <li>Best 5-card hand wins the pot</li>
+                        <li>Blinds: ₹10/₹20</li>
+                        <li>Starting chips: ₹5,000</li>
+                        <li>Betting rounds: Pre-flop, Flop, Turn, River</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Roulette Card -->
+        <div class="game-card fade-in" style="animation-delay: 0.1s;">
+            <div class="game-image roulette-bg"></div>
+            <div class="game-content">
+                <h2 class="game-title">Roulette</h2>
+                <p class="game-subtitle">Experience the thrill of multiplayer roulette</p>
+
+                <div class="game-features">
+                    <span class="feature-badge">🎮 Multiplayer</span>
+                    <span class="feature-badge">💰 Real-time Betting</span>
+                    <span class="feature-badge">🏆 Leaderboard</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="playerNameRoulette">Display Name</label>
+                    <input type="text"
+                           id="playerNameRoulette"
+                           class="form-control"
+                           placeholder="Enter your name" />
+                </div>
+
+                <button onclick="createLobby()" class="btn btn-primary btn-block">
+                    Create New Lobby
+                </button>
+
+                <div class="divider">
+                    <span>OR</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="joinCode">Lobby Code</label>
+                    <input type="text"
+                           id="joinCode"
+                           class="form-control"
+                           placeholder="Enter 5-digit code"
+                           maxlength="5"
+                           style="text-transform: uppercase;" />
+                </div>
+
+                <button onclick="joinLobby()" class="btn btn-secondary btn-block">
+                    Join Existing Lobby
+                </button>
+
+                <div style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-elevated); border-radius: 12px; border: 1px solid var(--border);">
+                    <h5 style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Want to Rejoin the Lobby</h5>
+                    <ul style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.8; padding-left: 1.25rem;">
+                        <li>Enter the same name as previously entered.</li>
+                        <li>Enter the Lobby Code.</li>
+                        <li>And you're good to go!</li>
+                    </ul>
+                </div>
+
+                <div id="rouletteLobbyInfo" style="display: none;">
+                    <div class="lobby-info">
+                        <div id="lobbyCodeDisplay" class="lobby-code-display"></div>
+                        <h4 style="text-align: center; color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px;">Players in Lobby</h4>
+                        <ul id="playerList"></ul>
+                        <button id="startBtn"
+                                onclick="startGame()"
+                                class="btn btn-primary btn-block"
+                                style="display:none; margin-top: 1.5rem;">
+                            Start Game
+                        </button>
+                    </div>
+                </div>
+
+                <div id="status" style="color: var(--success); text-align: center; margin-top: 1rem; font-weight: 500;"></div>
+            </div>
+        </div>
+
+        <!-- Blackjack Card -->
+        <div class="game-card fade-in" style="animation-delay: 0.2s;">
+            <div class="game-image blackjack-bg"></div>
+            <div class="game-content">
+                <h2 class="game-title">Blackjack</h2>
+                <p class="game-subtitle">Beat the dealer in classic 21</p>
+
+                <div class="game-features">
+                    <span class="feature-badge">🎯 Single Player</span>
+                    <span class="feature-badge">♠️ Classic Rules</span>
+                    <span class="feature-badge">💎 High Stakes</span>
+                </div>
+
+                <div style="padding: 3rem 0;">
+                    <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.6;">
+                        Test your skills against the dealer. Make strategic decisions to reach 21 without busting. Starting balance: <span style="color: var(--primary); font-weight: 600;">₹5,000</span>
+                    </p>
+                </div>
+
+                <a href="/Blackjack" class="btn btn-primary btn-block" style="text-decoration: none; display: inline-block; text-align: center;">
+                    Play Blackjack
+                </a>
+
+                <div style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-elevated); border-radius: 12px; border: 1px solid var(--border);">
+                    <h5 style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Quick Rules</h5>
+                    <ul style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.8; padding-left: 1.25rem;">
+                        <li>Get closer to 21 than the dealer</li>
+                        <li>Face cards are worth 10</li>
+                        <li>Aces can be 1 or 11</li>
+                        <li>Dealer stands on 17</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
     <script>
+        // Roulette SignalR Connection
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/hubs/roulette")
             .withAutomaticReconnect()
@@ -60,31 +192,23 @@
         connection.on("UpdatePlayerList", (players, creatorId) => {
             lobbyCreatorId = creatorId;
 
-            // display the code
-            document.getElementById("lobbyCodeDisplay").innerText =
-                `Lobby Code: ${currentLobbyCode}`;
+            document.getElementById("lobbyCodeDisplay").innerText = currentLobbyCode;
+            document.getElementById("rouletteLobbyInfo").style.display = "block";
 
-            // update player list
             const ul = document.getElementById('playerList');
-                ul.innerHTML = "";
-                players.forEach(name => {
+            ul.innerHTML = "";
+            players.forEach(name => {
                 const li = document.createElement('li');
                 li.textContent = name;
                 ul.appendChild(li);
             });
 
-            // Calculate number of columns (5 names per column)
-            const columns = Math.ceil(players.length / 4) || 1;
-            ul.style.columnCount = columns;
-
-            // only creator sees Start Game
             document.getElementById("startBtn").style.display =
-                (myConnectionId === lobbyCreatorId) ? "inline-block" : "none";
+                (myConnectionId === lobbyCreatorId) ? "block" : "none";
         });
 
         connection.on("GameStarted", lobbyCode => {
-            // only when the server says so do we go to the game
-            window.location = `/Game?lobbyCode=${lobbyCode}&playerName=${encodeURIComponent(document.getElementById("playerName").value || "Player")}`;
+            window.location = `/Game?lobbyCode=${lobbyCode}&playerName=${encodeURIComponent(document.getElementById("playerNameRoulette").value || "Player")}`;
         });
 
         async function startConnection() {
@@ -100,26 +224,61 @@
             return Math.random().toString(36).substr(2, 5).toUpperCase();
         }
 
+        // Roulette Functions
         async function createLobby() {
-            const name = document.getElementById("playerName").value || "Player";
+            const name = document.getElementById("playerNameRoulette").value || "Player";
             currentLobbyCode = generateLobbyCode();
-            document.getElementById("lobbyCodeDisplay").innerText =
-                `Lobby Code: ${currentLobbyCode}`;
             await connection.invoke("JoinLobby", currentLobbyCode, name);
         }
 
         async function joinLobby() {
-            const name = document.getElementById("playerName").value || "Player";
+            const name = document.getElementById("playerNameRoulette").value || "Player";
             const code = document.getElementById("joinCode").value.toUpperCase();
-            if (!code) return alert("Enter a lobby code.");
+            if (!code) {
+                alert("Please enter a lobby code");
+                return;
+            }
             currentLobbyCode = code;
-            document.getElementById("lobbyCodeDisplay").innerText =
-                `Lobby Code: ${currentLobbyCode}`;
             await connection.invoke("JoinLobby", currentLobbyCode, name);
         }
 
         async function startGame() {
             await connection.invoke("StartGame", currentLobbyCode);
         }
+
+        // Auto-uppercase lobby code input
+        document.getElementById("joinCode").addEventListener("input", function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        // Poker Functions
+        function createPokerLobby() {
+            const name = document.getElementById("playerNamePoker").value || "Player";
+            if (!name.trim()) {
+                alert("Please enter your name");
+                return;
+            }
+            const code = generateLobbyCode();
+            window.location = `/Poker?lobbyCode=${code}&playerName=${encodeURIComponent(name)}`;
+        }
+
+        function joinPokerLobby() {
+            const name = document.getElementById("playerNamePoker").value || "Player";
+            const code = document.getElementById("joinPokerCode").value.toUpperCase();
+            if (!name.trim()) {
+                alert("Please enter your name");
+                return;
+            }
+            if (!code) {
+                alert("Please enter a table code");
+                return;
+            }
+            window.location = `/Poker?lobbyCode=${code}&playerName=${encodeURIComponent(name)}`;
+        }
+
+        // Auto-uppercase poker code input
+        document.getElementById("joinPokerCode").addEventListener("input", function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
     </script>
 }

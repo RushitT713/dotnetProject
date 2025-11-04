@@ -2,216 +2,353 @@
 @{
     ViewData["Title"] = "Blackjack";
 }
-
-<div class="blackjack-container">
+<link rel="stylesheet" href="~/css/animation.css" />
+<link rel="stylesheet" href="~/css/site.css" />
+<div class="blackjack-container fade-in">
     <h2>Blackjack</h2>
 
-    <!-- Balance -->
-    <div class="balance-display mb-3">
-        <strong>Balance:</strong> ₹<span id="balance">@Model.PlayerBalance</span>
+    <div class="balance-display">
+        <strong>Balance</strong>
+        <div>
+            <span style="font-size: 1.5rem;">₹</span><span id="balance">@Model.PlayerBalance</span>
+        </div>
     </div>
 
-    <!-- BETTING PHASE -->
     <div id="betting-phase">
-        <h4>Select Chips to Bet</h4>
-        <div class="chips mb-2">
+        <h4 style="text-align: center; color: var(--text-secondary); margin: 2rem 0 1.5rem; font-size: 1.1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Place Your Bet</h4>
+
+        <div class="chips">
             <button class="btn-chip" data-value="5"><span>₹5</span></button>
             <button class="btn-chip" data-value="10"><span>₹10</span></button>
             <button class="btn-chip" data-value="25"><span>₹25</span></button>
             <button class="btn-chip" data-value="100"><span>₹100</span></button>
             <button class="btn-chip" data-value="500"><span>₹500</span></button>
-            <button class="btn-chip" id="btn-all-in"><span>ALL-IN</span></button>
+            <button class="btn-chip" id="btn-all-in"><span>ALL IN</span></button>
+        </div>
 
+        <div class="bet-display">
+            <strong>Current Bet</strong>
+            <div>
+                <span style="font-size: 1.2rem;">₹</span><span id="current-bet">0</span>
+            </div>
         </div>
-        <div class="bet-display mb-2">
-            <strong>Current Bet:</strong> ₹<span id="current-bet">0</span>
-        </div>
-        <div class="bet-actions mb-4">
-            <button id="clear-bet" class="btn btn-secondary">Clear</button>
-            <button id="ready-bet" class="btn btn-primary">Ready</button>
+
+        <div class="bet-actions">
+            <button id="clear-bet" class="btn btn-secondary" style="min-width: 140px;">Clear Bet</button>
+            <button id="ready-bet" class="btn btn-primary" style="min-width: 140px;">Deal Cards</button>
         </div>
     </div>
 
-    <!-- GAME TABLE -->
     <div id="game-table" style="display:none;">
-        <div class="row mb-3">
-            <div class="col text-center">
-                <h5>Dealer (<span id="dealer-score">?</span>)</h5>
-                <div id="dealer-cards" class="cards d-inline-block"></div>
-            </div>
+        <div style="margin-bottom: 3rem;">
+            <h5 style="text-align: center; color: var(--text-secondary); font-size: 1rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px;">
+                Dealer's Hand
+                <span style="color: var(--primary); font-size: 1.3rem; margin-left: 0.5rem; font-weight: 700;" id="dealer-score">?</span>
+            </h5>
+            <div id="dealer-cards" class="cards"></div>
         </div>
-        <div class="row mb-3">
-            <div class="col text-center">
-                <h5>You (<span id="player-score">0</span>)</h5>
-                <div id="player-cards" class="cards d-inline-block"></div>
-            </div>
+
+        <div style="margin-bottom: 2rem;">
+            <h5 style="text-align: center; color: var(--text-secondary); font-size: 1rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px;">
+                Your Hand
+                <span style="color: var(--primary); font-size: 1.3rem; margin-left: 0.5rem; font-weight: 700;" id="player-score">0</span>
+            </h5>
+            <div id="player-cards" class="cards"></div>
         </div>
-        <div class="player-actions text-center mb-3">
-            <button id="btn-hit" class="btn btn-warning" style="width:80px;height:80px;"><span>Hit</span></button>
-            <button id="btn-stand" class="btn btn-success" style="width:80px;height:80px;"><span>Stand</span></button>
+
+        <div class="player-actions">
+            <button id="btn-hit" class="btn btn-warning">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 2rem;">👊</span>
+                    <span>HIT</span>
+                </div>
+            </button>
+            <button id="btn-stand" class="btn btn-success">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 2rem;">✋</span>
+                    <span>STAND</span>
+                </div>
+            </button>
         </div>
-        <div id="result-message" class="mt-3 text-center fw-bold"></div>
+
+        <div id="result-message" class="mt-3"></div>
+
         <div class="mt-3 text-center">
-            <button id="btn-new-round" class="btn btn-outline-primary" style="display:none;">New Round</button>
+            <button id="btn-new-round" class="btn btn-primary" style="display:none; min-width: 200px; padding: 1rem 2rem;">
+                New Round
+            </button>
         </div>
     </div>
 </div>
 
-
 @section Scripts {
     <script>
-        // -- utility to render cards array into a container --
         function renderCards(containerId, cards, faceDownCount = 0) {
-          const div = document.getElementById(containerId);
-          div.innerHTML = '';
-          cards.forEach((c, i) => {
-            const cardEl = document.createElement('div');
-            cardEl.className = 'card-item';
+            const div = document.getElementById(containerId);
+            div.innerHTML = '';
+            cards.forEach((c, i) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card-item';
 
-            // Face-down card: use flip markup
-            if (faceDownCount > 0 && i >= cards.length - faceDownCount) {
-              cardEl.innerHTML = `
-                <div class="flip-card">
-                  <div class="flip-inner">
-                    <div class="flip-front">🂠</div>
-                    <div class="flip-back">${c}</div>
-                  </div>
-                </div>`;
-              cardEl.classList.add('card-flip-container');
-            }
-            else {
-              // Face-up: plain text with suit color class
-              cardEl.textContent = c;
-              const suit = c.slice(-1);
-              if (suit === '♥' || suit === '♦') {
-                cardEl.classList.add('red-suit');
-              } else {
-                cardEl.classList.add('black-suit');
-              }
-            }
+                if (faceDownCount > 0 && i >= cards.length - faceDownCount) {
+                    cardEl.innerHTML = `
+                        <div class="flip-card">
+                            <div class="flip-inner">
+                                <div class="flip-front">🂠</div>
+                                <div class="flip-back">${c}</div>
+                            </div>
+                        </div>`;
+                    cardEl.classList.add('card-flip-container');
+                } else {
+                    cardEl.textContent = c;
+                    const suit = c.slice(-1);
+                    if (suit === '♥' || suit === '♦') {
+                        cardEl.classList.add('red-suit');
+                    } else {
+                        cardEl.classList.add('black-suit');
+                    }
+                }
 
-            div.appendChild(cardEl);
-            // trigger the deal animation
-            setTimeout(() => cardEl.classList.add('card-dealt'), 10);
-          });
+                div.appendChild(cardEl);
+                setTimeout(() => cardEl.classList.add('card-dealt'), i * 100);
+            });
         }
 
         let currentBet = 0;
         const balanceEl = document.getElementById('balance');
-        const betEl     = document.getElementById('current-bet');
+        const betEl = document.getElementById('current-bet');
 
-        // -- Betting phase handlers --
         document.querySelectorAll('.btn-chip[data-value]').forEach(chip => {
-          chip.addEventListener('click', () => {
-            const v = parseInt(chip.dataset.value, 10);
-            currentBet += v;
-            // Prevent exceeding balance
-            const bal = parseInt(balanceEl.textContent, 10);
-            if (currentBet > bal) {
-              alert('Insufficient balance!');
-              currentBet = bal;
-            }
-            betEl.textContent = currentBet;
-          });
-        });
-        document.getElementById('btn-all-in').addEventListener('click', () => {
-          const bal = parseInt(balanceEl.textContent, 10);
-          currentBet = bal;
-          betEl.textContent = currentBet;
-        });
-        document.getElementById('clear-bet').addEventListener('click', () => {
-          currentBet = 0;
-          document.getElementById('current-bet').textContent = '0';
-        });
-
-        // -- Ready/bet: call PlaceBet, show initial deal --
-        document.getElementById('ready-bet').addEventListener('click', async () => {
+            chip.addEventListener('click', () => {
+                const v = parseInt(chip.dataset.value, 10);
                 const bal = parseInt(balanceEl.textContent, 10);
+
+                if (currentBet + v > bal) {
+                    showNotification('Insufficient balance!', 'error');
+                    currentBet = bal;
+                } else {
+                    currentBet += v;
+                }
+
+                betEl.textContent = currentBet;
+                // Animate from old value if you want, but simple update is fine
+                // animateValue(betEl, currentBet - v, currentBet, 300);
+            });
+        });
+
+        document.getElementById('btn-all-in').addEventListener('click', () => {
+            const bal = parseInt(balanceEl.textContent, 10);
+            const oldBet = currentBet;
+            currentBet = bal;
+            betEl.textContent = currentBet;
+            animateValue(betEl, oldBet, currentBet, 500);
+        });
+
+        document.getElementById('clear-bet').addEventListener('click', () => {
+            animateValue(betEl, currentBet, 0, 300);
+            currentBet = 0;
+        });
+
+        document.getElementById('ready-bet').addEventListener('click', async () => {
+            const bal = parseInt(balanceEl.textContent, 10);
             if (currentBet <= 0) {
-              return alert('Please select a bet.');
+                return showNotification('Please select a bet amount', 'error');
             }
             if (currentBet > bal) {
-              return alert('Insufficient balance! Please adjust your bet.');
+                return showNotification('Insufficient balance! Please adjust your bet.', 'error');
             }
-              const form = new FormData(); form.append('amount', currentBet);
-              const res = await fetch('/Blackjack/PlaceBet', { method:'POST', body:form });
-              const data = await res.json();
 
-              // Switch to game table
-              document.getElementById('betting-phase').style.display = 'none';
-              document.getElementById('game-table').style.display = 'block';
+            const form = new FormData();
+            form.append('amount', currentBet);
+            const res = await fetch('/Blackjack/PlaceBet', { method: 'POST', body: form });
+            const data = await res.json();
 
-              // Render: player gets 2, dealer shows 1 + 1 face-down
-              renderCards('player-cards', data.playerHand, 0);
-              renderCards('dealer-cards', data.dealerHand, /*faceDownCount=*/1);
 
-              document.getElementById('player-score').textContent = data.playerScore;
-              document.getElementById('dealer-score').textContent = '?';
-              document.getElementById('balance').textContent = data.balance;
+            document.getElementById('betting-phase').style.display = 'none';
+            document.getElementById('game-table').style.display = 'block';
+
+            renderCards('player-cards', data.playerHand, 0);
+            renderCards('dealer-cards', data.dealerHand, 1);
+
+            document.getElementById('player-score').textContent = data.playerScore;
+            document.getElementById('dealer-score').textContent = '?';
+
+            // This will now work, as data.balance is correctly (Balance - Bet)
+            animateValue(balanceEl, bal, data.balance, 500);
         });
 
-        // -- Hit handler --
         document.getElementById('btn-hit').addEventListener('click', async () => {
-          const res = await fetch('/Blackjack/Hit', { method:'POST' });
-          const data = await res.json();
+            const res = await fetch('/Blackjack/Hit', { method: 'POST' });
+            const data = await res.json();
 
-          renderCards('player-cards', data.playerHand, 0);
-          document.getElementById('player-score').textContent = data.playerScore;
+            renderCards('player-cards', data.playerHand, 0);
+            document.getElementById('player-score').textContent = data.playerScore;
 
-          if (data.isBust) {
-            document.getElementById('result-message').textContent = 'Bust! You lose.';
-            endRound();
-          }
+            if (data.isBust) {
+                // --- FIX 3: If player busts, call the stand() function ---
+                // This will fetch the final result, show the bust message,
+                // and update the balance from the server.
+                stand();
+            }
         });
 
-        // -- Stand handler --
-        document.getElementById('btn-stand').addEventListener('click', async () => {
-          const res = await fetch('/Blackjack/Stand', { method:'POST' });
-          const data = await res.json();
+        // --- FIX 4: Made stand logic a separate function ---
+        const standButton = document.getElementById('btn-stand');
+        standButton.addEventListener('click', stand);
 
-        // after you fetch /Blackjack/Stand and render cards:
-        renderCards('dealer-cards', data.dealerHand, 0);
-        // Flip over any face-down cards with a delay
-        document.querySelectorAll('#dealer-cards .flip-inner').forEach(inner => {
-          setTimeout(() => inner.classList.add('reveal'), 200);
-        });
+        async function stand() {
+            // Disable buttons immediately
+            document.getElementById('btn-hit').disabled = true;
+            standButton.disabled = true;
 
-        document.getElementById('dealer-score').textContent = data.dealerScore;
-        document.getElementById('result-message').textContent = data.result;
-        document.getElementById('balance').textContent = data.balance;
-        endRound();
+            const res = await fetch('/Blackjack/Stand', { method: 'POST' });
+            const data = await res.json();
 
-          // Reveal dealer fully and show score
-          // renderCards('dealer-cards', data.dealerHand, 0);
-          // document.getElementById('dealer-score').textContent = data.dealerScore;
+            renderCards('dealer-cards', data.dealerHand, 0);
+            document.querySelectorAll('#dealer-cards .flip-inner').forEach(inner => {
+                setTimeout(() => inner.classList.add('reveal'), 200);
+            });
 
-          // Show result, update balance
-          // document.getElementById('result-message').textContent = data.result;
-          // document.getElementById('balance').textContent = data.balance;
-          // endRound();
-        });
+            setTimeout(() => {
+                document.getElementById('dealer-score').textContent = data.dealerScore;
 
-        // -- End of round UI tweaks --
-        function endRound() {
-          document.getElementById('btn-hit').disabled = true;
-          document.getElementById('btn-stand').disabled = true;
-          document.getElementById('btn-new-round').style.display = 'inline-block';
+                let resultColor = 'var(--text-secondary)';
+                let resultIcon = '🤝';
+                if (data.result.includes('win') || data.result.includes('Win')) {
+                    resultColor = 'var(--success)';
+                    resultIcon = '🎉';
+                } else if (data.result.includes('lose') || data.result.includes('Lose') || data.result.includes('Bust')) {
+                    resultColor = 'var(--danger)';
+                    resultIcon = '💔';
+                }
+
+                document.getElementById('result-message').innerHTML = `
+                    <div style="color: ${resultColor}; font-size: 1.8rem; animation: fadeIn 0.5s ease;">
+                        ${resultIcon} ${data.result}
+                    </div>`;
+
+                // This animate call is now correct, showing win/loss/push
+                const oldBalance = parseInt(balanceEl.textContent);
+                animateValue(balanceEl, oldBalance, data.balance, 800);
+                endRound();
+            }, 600);
         }
 
-        // -- New Round: reset everything --
+        function endRound() {
+            document.getElementById('btn-hit').disabled = true;
+            document.getElementById('btn-stand').disabled = true; // stand() already did this, but good to be sure
+            document.getElementById('btn-new-round').style.display = 'inline-block';
+        }
+
         document.getElementById('btn-new-round').addEventListener('click', () => {
-          currentBet = 0;
-          document.getElementById('current-bet').textContent = '0';
-          document.getElementById('game-table').style.display = 'none';
-          document.getElementById('betting-phase').style.display = 'block';
-          document.getElementById('dealer-cards').innerHTML = '';
-          document.getElementById('player-cards').innerHTML = '';
-          document.getElementById('result-message').textContent = '';
-          document.getElementById('player-score').textContent = '0';
-          document.getElementById('dealer-score').textContent = '?';
-          document.getElementById('btn-hit').disabled = false;
-          document.getElementById('btn-stand').disabled = false;
-          document.getElementById('btn-new-round').style.display = 'none';
+            currentBet = 0;
+            document.getElementById('current-bet').textContent = '0';
+            document.getElementById('game-table').style.display = 'none';
+            document.getElementById('betting-phase').style.display = 'block';
+            document.getElementById('dealer-cards').innerHTML = '';
+            document.getElementById('player-cards').innerHTML = '';
+            document.getElementById('result-message').innerHTML = '';
+            document.getElementById('player-score').textContent = '0';
+            document.getElementById('dealer-score').textContent = '?';
+            document.getElementById('btn-hit').disabled = false;
+            document.getElementById('btn-stand').disabled = false;
+            document.getElementById('btn-new-round').style.display = 'none';
         });
+
+        function animateValue(element, start, end, duration) {
+            // No animation if values are the same
+            if (start === end) {
+                element.textContent = end;
+                return;
+            }
+
+            const range = end - start;
+            const increment = range / (duration / 16);
+            let current = start;
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    element.textContent = end;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current);
+                }
+            }, 16);
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                background: ${type === 'error' ? 'var(--danger)' : 'var(--success)'};
+                color: white;
+                border-radius: 12px;
+                font-weight: 600;
+                z-index: 9999;
+                animation: fadeIn 0.3s ease;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
     </script>
+
+    <style>
+
+        .flip-card {
+            width: 100%;
+            height: 100%;
+            perspective: 600px;
+        }
+
+        .flip-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.6s ease;
+        }
+
+        .flip-front, .flip-back {
+            position: absolute;
+            backface-visibility: hidden;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .flip-front {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .flip-back {
+            background: white;
+            color: #000;
+            transform: rotateY(180deg);
+        }
+
+        .flip-inner.reveal {
+            transform: rotateY(180deg);
+        }
+
+        .card-flip-container {
+            width: 65px;
+            height: 95px;
+            background: transparent !important;
+            border: none !important;
+        }
+    </style>
 }

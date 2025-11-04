@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - dotnetProject</title>
+    <title>@ViewData["Title"] - House of Chance - FunPlay Roulette and BlackJack</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/dotnetProject.styles.css" asp-append-version="true" />
@@ -11,90 +11,7 @@
           rel="stylesheet"
           integrity="sha384-…"
           crossorigin="anonymous">
-    <style>
-        .navbar {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 50px;
-            height: 90px;
-            z-index: 1000;
-            top: 0;
-            left: 0;
-        }
-
-        .nav-content {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            justify-content: space-between;
-            position: relative;
-        }
-
-        .nav-links {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 150px;
-        }
-            .nav-links ul {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-                display: flex;
-                font: bold 1.2rem sans-serif;
-                text-transform: uppercase;
-                color: grey;
-            }
-
-                .nav-links ul li {
-                    padding: 0 .7em .25em;
-                    cursor: pointer;
-                    position: relative;
-                    overflow: hidden;
-                    transition: .3s;
-                }
-
-                    .nav-links ul li:hover {
-                        color: #fff;
-                    }
-
-                    .nav-links ul li:before {
-                        content: "";
-                        position: absolute;
-                        inset: calc(100% - 3.5px) 0 0 0; /* 3px = the thickness */
-                        /* background: #ce4f20; */
-                        background: #f65f28;
-                        scale: 0 1;
-                        transition: .3s, translate 0s .3s;
-                    }
-
-                .nav-links ul:hover li:before {
-                    scale: 1;
-                }
-
-                .nav-links ul li:hover:before {
-                    translate: 0;
-                    transition: .3s;
-                }
-
-                .nav-links ul:hover li:has(~ li:hover):before {
-                    translate: 100% 0;
-                    transition: .2s .2s,scale 0s .4s;
-                }
-
-                .nav-links ul:hover li:hover ~ li:before {
-                    translate: -100% 0;
-                    transition: .2s .2s,scale 0s .4s;
-                }
-
-        .logo img {
-            width: 120px;
-            height: auto;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 </head>
 
 <body>
@@ -145,6 +62,7 @@
             &copy; 2025 - dotnetProject - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer> *@
+    
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

@@ -7,11 +7,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Views\MultiplayerBlackjack\**" />
+    <Content Remove="Views\MultiplayerBlackjack\**" />
+    <EmbeddedResource Remove="Views\MultiplayerBlackjack\**" />
+    <None Remove="Views\MultiplayerBlackjack\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="wwwroot\css\animation.css" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
   </ItemGroup>
 
   <ItemGroup>

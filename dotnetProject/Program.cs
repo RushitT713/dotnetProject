@@ -35,5 +35,6 @@ app.MapControllerRoute(
 
 // Map our SignalR hub
 app.MapHub<RouletteHub>("/hubs/roulette");
+app.MapHub<PokerHub>("/hubs/poker");
 
 app.Run();
