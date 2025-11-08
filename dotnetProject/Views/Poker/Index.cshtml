@@ -8,15 +8,27 @@
 
 <style>
     .poker-container {
-        max-width: 1600px;
-        margin: 0 auto;
-        padding: 2rem;
+        max-width: 100%;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
         position: relative;
+        display: flex;
+        overflow: hidden;
+    }
+
+    #poker-lobby {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 2rem;
+        width: 100%; /* <--- ADD THIS LINE TO FIX THE CENTERING */
     }
 
     .poker-lobby-info {
-        max-width: 800px;
-        margin: 2rem auto;
+        max-width: 1000px;
+        width: 100%;
         background: var(--bg-card);
         border: 2px solid var(--border);
         border-radius: 20px;
@@ -33,21 +45,39 @@
         font-family: 'Courier New', monospace;
     }
 
+    .poker-game-wrapper {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        overflow: hidden;
+        flex-direction: column;
+    }
+
+    #poker-table-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.5rem;
+        color: var(--primary);
+        margin-bottom: 1.5rem; /* Adds space above the table */
+        text-align: center;
+    }
+
     .poker-table {
         position: relative;
-        width: 1000px;
-        height: 600px;
-        margin: 0 auto 2rem;
+        width: 800px;
+        height: 480px;
+        margin: auto;
         background: linear-gradient(135deg, #1a4d2e 0%, #0f2818 100%);
-        border-radius: 300px;
-        border: 12px solid #8B4513;
+        border-radius: 240px;
+        border: 10px solid #8B4513;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 0 50px rgba(0, 0, 0, 0.3);
     }
 
     .table-felt {
         position: absolute;
-        inset: 20px;
-        border-radius: 280px;
+        inset: 15px;
+        border-radius: 225px;
         background: radial-gradient(ellipse at center, #2d5a3d 0%, #1a4d2e 100%);
         border: 3px solid rgba(139, 69, 19, 0.3);
     }
@@ -58,11 +88,11 @@
         left: 50%;
         transform: translate(-50%, -50%);
         display: flex;
-        gap: 0.5rem;
-        padding: 1.5rem;
+        gap: 0.4rem;
+        padding: 1rem;
         background: rgba(0, 0, 0, 0.2);
-        border-radius: 12px;
-        min-width: 400px;
+        border-radius: 10px;
+        min-width: 320px;
         justify-content: center;
     }
 
@@ -72,24 +102,24 @@
         left: 50%;
         transform: translate(-50%, -100%);
         background: rgba(212, 175, 55, 0.9);
-        padding: 0.75rem 2rem;
-        border-radius: 30px;
+        padding: 0.5rem 1.5rem;
+        border-radius: 25px;
         font-weight: 700;
-        font-size: 1.5rem;
+        font-size: 1.2rem;
         color: var(--bg-dark);
         box-shadow: 0 4px 20px rgba(212, 175, 55, 0.5);
     }
 
     .player-seat {
         position: absolute;
-        width: 180px;
+        width: 140px;
     }
 
     .player-card {
         background: var(--bg-card);
         border: 2px solid var(--border);
-        border-radius: 16px;
-        padding: 1rem;
+        border-radius: 12px;
+        padding: 0.75rem;
         text-align: center;
         transition: all 0.3s ease;
     }
@@ -128,23 +158,23 @@
 
     .player-name {
         font-weight: 700;
-        font-size: 1rem;
+        font-size: 0.85rem;
         color: var(--text-primary);
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.4rem;
     }
 
     .player-balance {
         color: var(--primary);
         font-weight: 600;
-        font-size: 0.9rem;
-        margin-bottom: 0.75rem;
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
     }
 
     .player-bet {
         background: rgba(212, 175, 55, 0.2);
-        padding: 0.35rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
         color: var(--primary);
         font-weight: 600;
         display: inline-block;
@@ -152,33 +182,33 @@
 
     .player-hole-cards {
         display: flex;
-        gap: 0.25rem;
+        gap: 0.2rem;
         justify-content: center;
-        margin-top: 0.75rem;
+        margin-top: 0.5rem;
     }
 
     .playing-card {
-        width: 50px;
-        height: 70px;
+        width: 40px;
+        height: 56px;
         background: white;
-        border-radius: 6px;
+        border-radius: 5px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.3rem;
+        font-size: 1.1rem;
         font-weight: 700;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
 
     .community-card {
-        width: 70px;
-        height: 98px;
+        width: 56px;
+        height: 78px;
         background: white;
-        border-radius: 8px;
+        border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.8rem;
+        font-size: 1.5rem;
         font-weight: 700;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
         animation: dealCard 0.5s ease-out;
@@ -198,40 +228,40 @@
     }
 
     .player-seat-0 {
-        bottom: -80px;
+        bottom: -70px;
         left: 50%;
         transform: translateX(-50%);
     }
 
     .player-seat-1 {
-        bottom: 50px;
-        left: 50px;
+        bottom: 40px;
+        left: 40px;
     }
 
     .player-seat-2 {
-        top: 150px;
-        left: -100px;
+        top: 120px;
+        left: -80px;
     }
 
     .player-seat-3 {
-        top: 50px;
+        top: 30px;
         left: 50%;
         transform: translateX(-50%);
     }
 
     .player-seat-4 {
-        top: 150px;
-        right: -100px;
+        top: 120px;
+        right: -80px;
     }
 
     .player-seat-5 {
-        bottom: 50px;
-        right: 50px;
+        bottom: 40px;
+        right: 40px;
     }
 
     .player-seat-6 {
         top: 50%;
-        right: -120px;
+        right: -90px;
         transform: translateY(-50%);
     }
 
@@ -239,30 +269,34 @@
         background: var(--bg-card);
         border: 1px solid var(--border);
         border-radius: 20px;
-        padding: 2rem;
-        margin: 2rem auto;
-        max-width: 1000px;
+        padding: 1.5rem;
+        width: 400px;
+        height: 100vh;
+        overflow-y: auto;
+        flex-shrink: 0;
     }
 
     .action-buttons {
         display: flex;
-        gap: 1rem;
+        gap: 0.75rem;
         justify-content: center;
         flex-wrap: wrap;
         margin-bottom: 1.5rem;
     }
 
     .poker-btn {
-        padding: 1rem 2rem;
+        padding: 0.75rem 1.25rem;
         border: 2px solid;
         border-radius: 12px;
         font-weight: 700;
-        font-size: 1rem;
+        font-size: 0.85rem;
         cursor: pointer;
         transition: all 0.3s ease;
         text-transform: uppercase;
         letter-spacing: 1px;
-        min-width: 120px;
+        min-width: 90px;
+        flex: 1 1 calc(50% - 0.375rem);
+        max-width: calc(50% - 0.375rem);
     }
 
         .poker-btn:hover:not(:disabled) {
@@ -317,14 +351,15 @@
 
     .raise-input-group {
         display: flex;
-        gap: 1rem;
+        gap: 0.75rem;
         align-items: center;
         justify-content: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
+        flex-direction: column;
     }
 
     .raise-input {
-        width: 200px;
+        width: 100%;
         padding: 0.75rem 1rem;
         background: var(--bg-elevated);
         border: 2px solid var(--border);
@@ -342,16 +377,22 @@
 
     .game-info-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.5rem;
-        margin-top: 2rem;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .game-info-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
     }
 
     .info-card {
         background: var(--bg-elevated);
         border: 1px solid var(--border);
         border-radius: 12px;
-        padding: 1.5rem;
+        padding: 1rem;
     }
 
     .info-label {
@@ -364,12 +405,12 @@
 
     .info-value {
         color: var(--primary);
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         font-weight: 700;
     }
 
     .game-log {
-        max-height: 200px;
+        max-height: 150px;
         overflow-y: auto;
         padding: 1rem;
         background: var(--bg-elevated);
@@ -488,28 +529,8 @@
     </div>
 
     <!-- Game Screen -->
-    <div id="poker-game" style="display: none;">
-        <div class="poker-table">
-            <div class="table-felt">
-                <div class="pot-display">
-                    POT: ₹<span id="pot-amount">0</span>
-                </div>
-
-                <div class="community-cards-area" id="community-cards">
-                    <!-- Community cards will be added here -->
-                </div>
-
-                <!-- Player seats -->
-                <div class="player-seat player-seat-0" id="seat-0"></div>
-                <div class="player-seat player-seat-1" id="seat-1"></div>
-                <div class="player-seat player-seat-2" id="seat-2"></div>
-                <div class="player-seat player-seat-3" id="seat-3"></div>
-                <div class="player-seat player-seat-4" id="seat-4"></div>
-                <div class="player-seat player-seat-5" id="seat-5"></div>
-                <div class="player-seat player-seat-6" id="seat-6"></div>
-            </div>
-        </div>
-
+    <div id="poker-game" style="display: none; width: 100%; height: 100%;">
+        <!-- Left Side: Controls Panel -->
         <div class="controls-panel">
             <div id="game-controls" style="display: none;">
                 <div class="raise-input-group">
@@ -540,19 +561,46 @@
                         <div class="info-label">Your Balance</div>
                         <div class="info-value">₹<span id="my-balance">5000</span></div>
                     </div>
-                    <div class="info-card">
-                        <div class="info-label">Current Phase</div>
-                        <div class="info-value" id="game-phase">Waiting</div>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-label">Current Bet</div>
-                        <div class="info-value">₹<span id="current-bet">0</span></div>
+                    <div class="game-info-row">
+                        <div class="info-card">
+                            <div class="info-label">Current Phase</div>
+                            <div class="info-value" id="game-phase">Waiting</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">Current Bet</div>
+                            <div class="info-value">₹<span id="current-bet">0</span></div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="game-log" id="game-log">
                     <div class="info-label" style="margin-bottom: 1rem;">Game Activity</div>
                     <!-- Log entries will appear here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Poker Table -->
+        <div class="poker-game-wrapper">
+            <h4 id="poker-table-title">Poker Table</h4>
+            <div class="poker-table">
+                <div class="table-felt">
+                    <div class="pot-display">
+                        POT: ₹<span id="pot-amount">0</span>
+                    </div>
+
+                    <div class="community-cards-area" id="community-cards">
+                        <!-- Community cards will be added here -->
+                    </div>
+
+                    <!-- Player seats -->
+                    <div class="player-seat player-seat-0" id="seat-0"></div>
+                    <div class="player-seat player-seat-1" id="seat-1"></div>
+                    <div class="player-seat player-seat-2" id="seat-2"></div>
+                    <div class="player-seat player-seat-3" id="seat-3"></div>
+                    <div class="player-seat player-seat-4" id="seat-4"></div>
+                    <div class="player-seat player-seat-5" id="seat-5"></div>
+                    <div class="player-seat player-seat-6" id="seat-6"></div>
                 </div>
             </div>
         </div>
@@ -601,7 +649,7 @@
 
         connection.on("GameStarted", () => {
             document.getElementById('poker-lobby').style.display = 'none';
-            document.getElementById('poker-game').style.display = 'block';
+            document.getElementById('poker-game').style.display = 'flex';
         });
 
         connection.on("GameState", (state) => {
@@ -641,7 +689,7 @@
                 await connection.start();
                 await connection.invoke("JoinPokerLobby", "@lobbyCode", myPlayerName);
                 document.getElementById('reconnect-loader').style.display = 'none';
-                document.getElementById('poker-lobby').style.display = 'block';
+                document.getElementById('poker-lobby').style.display = 'flex';
             } catch (err) {
                 console.error(err);
                 setTimeout(startConnection, 2000);
