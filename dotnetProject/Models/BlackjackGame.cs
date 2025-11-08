@@ -9,7 +9,7 @@ namespace dotnetProject.Models
         private List<string> Deck { get; set; }
         public List<string> PlayerHand { get; set; }
         public List<string> DealerHand { get; set; }
-        public int PlayerBalance { get; set; }
+        public int PlayerBalance { get; set; } // Now just for display, actual balance in wallet
         public int CurrentBet { get; set; }
         public bool IsGameOver { get; set; }
 
@@ -22,7 +22,7 @@ namespace dotnetProject.Models
 
         public BlackjackGame()
         {
-            PlayerBalance = 5000; // Starting balance
+            PlayerBalance = 5000; // Default for display only
             ResetDeck();
             PlayerHand = new List<string>();
             DealerHand = new List<string>();
@@ -62,8 +62,7 @@ namespace dotnetProject.Models
 
         public void StartNewRound(int betAmount)
         {
-            // --- FIX 1: Bet is taken from balance at the START of the round ---
-            PlayerBalance -= betAmount;
+            // Bet is handled by controller/wallet service, not here
             CurrentBet = betAmount;
             IsGameOver = false;
             PlayerHand.Clear();
@@ -101,7 +100,6 @@ namespace dotnetProject.Models
 
             foreach (var card in hand)
             {
-                // Ensure card is not null or empty
                 if (string.IsNullOrEmpty(card)) continue;
 
                 string rank = card.Substring(0, card.Length - 1);
@@ -124,41 +122,29 @@ namespace dotnetProject.Models
 
         public string GetResult()
         {
-            // --- FIX 2: Re-written payout logic ---
-            // The bet was already subtracted. We now only add winnings.
-            // Win = bet * 2 (original bet back + winnings)
-            // Push = bet * 1 (original bet back)
-            // Loss = 0 (bet is already gone)
-
+            // This method now just returns the result message
+            // Balance updates are handled in the controller
             int playerScore = CalculateScore(PlayerHand);
             int dealerScore = CalculateScore(DealerHand);
 
             if (playerScore > 21)
             {
-                // Player busts. Bet is already lost.
                 return "Bust! You lose.";
             }
             else if (dealerScore > 21)
             {
-                // Dealer busts. Player wins.
-                PlayerBalance += CurrentBet * 2; // Return bet + winnings
                 return "Dealer busts! You win!";
             }
             else if (playerScore > dealerScore)
             {
-                // Player wins.
-                PlayerBalance += CurrentBet * 2; // Return bet + winnings
                 return "You win!";
             }
             else if (playerScore < dealerScore)
             {
-                // Player loses. Bet is already lost.
                 return "You lose.";
             }
             else
             {
-                // Push (tie).
-                PlayerBalance += CurrentBet; // Return original bet
                 return "Push. It's a tie.";
             }
         }

@@ -4,7 +4,8 @@
     {
         public string ConnectionId { get; set; }
         public string Name { get; set; }
-        public decimal Balance { get; set; }
+        public string PlayerId { get; set; } // Cookie-based player ID
+        public decimal Balance { get; set; } // Synced with wallet
         public List<Card> Hand { get; set; } = new();
         public decimal CurrentBet { get; set; }
         public bool HasFolded { get; set; }

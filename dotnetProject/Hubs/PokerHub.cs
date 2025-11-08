@@ -1,17 +1,26 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
 using dotnetProject.Models;
+using dotnetProject.Services;
 
 namespace dotnetProject.Hubs
 {
     public class PokerHub : Hub
     {
         private static readonly ConcurrentDictionary<string, PokerLobby> PokerLobbies = new();
+        private readonly IWalletService _walletService;
         private static readonly string[] Ranks = { "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A" };
         private static readonly string[] Suits = { "H", "D", "C", "S" };
+        public PokerHub(IWalletService walletService)
+        {
+            _walletService = walletService;
+        }
 
         public async Task JoinPokerLobby(string lobbyCode, string playerName)
         {
+            var httpContext = Context.GetHttpContext();
+            var playerId = httpContext?.Items["PlayerId"]?.ToString() ?? Guid.NewGuid().ToString("N");
+
             var lobby = PokerLobbies.GetOrAdd(lobbyCode, _ => new PokerLobby
             {
                 LobbyCode = lobbyCode,
@@ -19,13 +28,18 @@ namespace dotnetProject.Hubs
             });
 
             var existingPlayer = lobby.Players.FirstOrDefault(p =>
-                p.Name.Equals(playerName, StringComparison.OrdinalIgnoreCase));
+                p.PlayerId.Equals(playerId, StringComparison.OrdinalIgnoreCase));
 
             if (existingPlayer != null)
             {
                 // Reconnecting player
                 existingPlayer.ConnectionId = Context.ConnectionId;
+                existingPlayer.Name = playerName;
                 existingPlayer.IsActive = true;
+
+                // Sync balance from wallet
+                var balance = await _walletService.GetBalanceAsync(playerId);
+                existingPlayer.Balance = balance;
             }
             else
             {
@@ -36,11 +50,15 @@ namespace dotnetProject.Hubs
                     return;
                 }
 
+                // Get balance from wallet
+                var balance = await _walletService.GetBalanceAsync(playerId);
+
                 var newPlayer = new PokerPlayer
                 {
                     ConnectionId = Context.ConnectionId,
                     Name = playerName,
-                    Balance = 5000m,
+                    PlayerId = playerId,
+                    Balance = balance,
                     SeatPosition = lobby.Players.Count
                 };
                 lobby.Players.Add(newPlayer);
@@ -408,7 +426,18 @@ namespace dotnetProject.Hubs
 
             var winner = results[0];
             var winningPlayer = activePlayers.First(p => p.Name == winner.PlayerName);
-            winningPlayer.Balance += game.Pot;
+
+            // Update wallet with winnings
+            await _walletService.AddBalanceAsync(
+                winningPlayer.PlayerId,
+                game.Pot,
+                "Poker",
+                $"Won pot: ₹{game.Pot}"
+            );
+
+            // Sync balance from wallet
+            var newBalance = await _walletService.GetBalanceAsync(winningPlayer.PlayerId);
+            winningPlayer.Balance = newBalance;
 
             game.GameLog.Add($"{winner.PlayerName} wins ₹{game.Pot} with {winner.Description}!");
 
@@ -434,7 +463,18 @@ namespace dotnetProject.Hubs
             if (!PokerLobbies.TryGetValue(lobbyCode, out var lobby)) return;
             var game = lobby.GameState;
 
-            winner.Balance += game.Pot;
+            // Update wallet with winnings
+            await _walletService.AddBalanceAsync(
+                winner.PlayerId,
+                game.Pot,
+                "Poker",
+                "Won pot (all others folded)"
+            );
+
+            // Sync balance from wallet
+            var newBalance = await _walletService.GetBalanceAsync(winner.PlayerId);
+            winner.Balance = newBalance;
+
             game.GameLog.Add($"{winner.Name} wins ₹{game.Pot} (all others folded)");
 
             await Clients.Group(lobbyCode).SendAsync("RoundWinner", new
@@ -485,6 +525,22 @@ namespace dotnetProject.Hubs
             if (!PokerLobbies.TryGetValue(lobbyCode, out var lobby)) return;
 
             var currentPlayer = lobby.Players[lobby.GameState.CurrentPlayerIndex];
+
+            // --- START FIX ---
+            // Check if the player is disconnected.
+            if (!currentPlayer.IsActive)
+            {
+                // Player is disconnected, auto-fold them
+                currentPlayer.HasFolded = true;
+                lobby.GameState.GameLog.Add($"{currentPlayer.Name} folds (disconnected)");
+
+                // Immediately advance the game to the next player
+                // This will also broadcast the new game state
+                await AdvanceGame(lobbyCode);
+                return; // Stop and don't send "YourTurn"
+            }
+            // --- END FIX ---
+
             await Clients.Client(currentPlayer.ConnectionId).SendAsync("YourTurn");
         }
 

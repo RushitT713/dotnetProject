@@ -575,6 +575,11 @@
         connection.on("PlayerJoined", (message) => {
             showNotification(message, 'success'); // Uses your existing notification function
         });
+        connection.on("PlayerDisconnected", (playerName) => {
+            showNotification(`${playerName} has disconnected`, 'error');
+            // The "UpdatePlayerList" and "RoundResult" (leaderboard)
+            // events will automatically handle removing them from the UI.
+        });
         async function startConnection() {
             if (connection.state === HubConnectionState.Disconnected) {
                 try {

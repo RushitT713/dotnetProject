@@ -1,11 +1,24 @@
 ﻿using dotnetProject.Models;
+using dotnetProject.Services;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-namespace YourProjectNamespace.Controllers
+
+namespace dotnetProject.Controllers
 {
     public class BlackjackController : Controller
     {
         private const string SessionKey = "BlackjackGame";
+        private readonly IWalletService _walletService;
+
+        public BlackjackController(IWalletService walletService)
+        {
+            _walletService = walletService;
+        }
+
+        private string GetPlayerId()
+        {
+            return HttpContext.Items["PlayerId"]?.ToString() ?? string.Empty;
+        }
 
         private BlackjackGame GetGame()
         {
@@ -14,7 +27,6 @@ namespace YourProjectNamespace.Controllers
                 ? new BlackjackGame()
                 : JsonConvert.DeserializeObject<BlackjackGame>(json);
 
-            // always save back so Session is initialized
             SaveGame(game);
             return game;
         }
@@ -27,19 +39,43 @@ namespace YourProjectNamespace.Controllers
 
         // Renders /Blackjack
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            var playerId = GetPlayerId();
             var game = GetGame();
+
+            // Get real balance from wallet
+            var balance = await _walletService.GetBalanceAsync(playerId);
+            game.PlayerBalance = (int)balance;
+            SaveGame(game);
+
             return View(game);
         }
 
         // AJAX: place your bet and deal initial cards
         [HttpPost]
-        public IActionResult PlaceBet([FromForm] int amount)
+        public async Task<IActionResult> PlaceBet([FromForm] int amount)
         {
+            var playerId = GetPlayerId();
+
+            // Check if player has sufficient balance
+            if (!await _walletService.HasSufficientBalanceAsync(playerId, amount))
+            {
+                return Json(new { error = "Insufficient balance" });
+            }
+
+            // Deduct bet from wallet
+            await _walletService.DeductBalanceAsync(playerId, amount, "Blackjack", $"Bet placed: ₹{amount}");
+
             var game = GetGame();
             game.StartNewRound(amount);
+
+            // Update balance from wallet
+            var newBalance = await _walletService.GetBalanceAsync(playerId);
+            game.PlayerBalance = (int)newBalance;
+
             SaveGame(game);
+
             return Json(new
             {
                 playerHand = game.PlayerHand,
@@ -56,6 +92,7 @@ namespace YourProjectNamespace.Controllers
             var game = GetGame();
             game.PlayerHit();
             SaveGame(game);
+
             return Json(new
             {
                 playerHand = game.PlayerHand,
@@ -66,12 +103,39 @@ namespace YourProjectNamespace.Controllers
 
         // AJAX: player stands → dealer plays, game over
         [HttpPost]
-        public IActionResult Stand()
+        public async Task<IActionResult> Stand()
         {
+            var playerId = GetPlayerId();
             var game = GetGame();
+
             game.DealerPlay();
             var result = game.GetResult();
+
+            // Calculate winnings and update wallet
+            int playerScore = game.CalculateScore(game.PlayerHand);
+            int dealerScore = game.CalculateScore(game.DealerHand);
+
+            if (playerScore <= 21)
+            {
+                if (dealerScore > 21 || playerScore > dealerScore)
+                {
+                    // Player wins - add winnings to wallet
+                    await _walletService.AddBalanceAsync(playerId, game.CurrentBet * 2, "Blackjack", $"Won: ₹{game.CurrentBet * 2}");
+                }
+                else if (playerScore == dealerScore)
+                {
+                    // Push - return bet to wallet
+                    await _walletService.AddBalanceAsync(playerId, game.CurrentBet, "Blackjack", "Push - Bet returned");
+                }
+                // Loss - bet already deducted, do nothing
+            }
+
+            // Update balance from wallet
+            var newBalance = await _walletService.GetBalanceAsync(playerId);
+            game.PlayerBalance = (int)newBalance;
+
             SaveGame(game);
+
             return Json(new
             {
                 dealerHand = game.DealerHand,
