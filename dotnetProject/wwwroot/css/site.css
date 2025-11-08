@@ -787,6 +787,39 @@ body {
 /* ========== RESPONSIVE ========== */
 @media (max-width: 1200px) {
     .games-grid {
+        flex-direction: column;
+    }
+
+    .game-card {
+        flex: 1 1 auto;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+        .game-card:hover {
+            flex: 1 1 auto;
+        }
+
+    .games-grid:has(.game-card:hover) .game-card:not(:hover) {
+        flex: 1 1 auto;
+        opacity: 0.7;
+    }
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 1400px) {
+    .games-grid {
+        gap: 0.75rem;
+    }
+
+    .game-card {
+        flex: 1 1 33.333%;
+    }
+}
+
+@media (max-width: 1200px) {
+    .games-grid {
         grid-template-columns: 1fr;
     }
 }

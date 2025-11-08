@@ -3,6 +3,80 @@
 }
 <link rel="stylesheet" href="~/css/animation.css" />
 <link rel="stylesheet" href="~/css/site.css" />
+
+<style>
+    /* ============================================
+       LOBBY VIEW - EXPANDABLE CARD LAYOUT
+       Add this CSS to Views/Lobby/Index.cshtml
+       ============================================ */
+
+    /* Override the games-grid to use flexbox for single row layout */
+    .games-grid {
+        display: flex !important;
+        flex-direction: row;
+        gap: 1rem;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 1rem;
+        overflow: hidden; /* Prevent horizontal scroll */
+    }
+
+    /* Base state: All cards equal width */
+    .game-card {
+        flex: 1 1 33.333%;
+        min-width: 0; /* Allow flex items to shrink below content size */
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+        /* Hover state: Expand the hovered card */
+        .game-card:hover {
+            flex: 2 1 50%;
+            z-index: 10;
+        }
+
+    /* When one card is hovered, shrink the others */
+    .games-grid:has(.game-card:hover) .game-card:not(:hover) {
+        flex: 0.5 1 25%;
+    }
+
+    /* Smooth transitions for all internal content */
+    .game-card .game-content {
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    /* Slightly fade non-hovered cards' content */
+    .games-grid:has(.game-card:hover) .game-card:not(:hover) .game-content {
+        opacity: 0.7;
+        transform: scale(0.98);
+    }
+
+    /* Enhance the image scaling on hover */
+    .game-card .game-image {
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .game-card:hover .game-image {
+        transform: scale(1.05);
+    }
+
+    /* Additional polish: Add subtle glow on hover */
+    .game-card:hover {
+        box-shadow: 0 8px 40px rgba(212, 175, 55, 0.3);
+    }
+
+    /* Ensure buttons remain clickable during transitions */
+    .game-card button,
+    .game-card input,
+    .game-card a {
+        position: relative;
+        z-index: 1;
+    }
+</style>
+
 <div class="lobby-container">
     <div class="lobby-header fade-in">
         <h1>Welcome to FunPlay Casino</h1>
