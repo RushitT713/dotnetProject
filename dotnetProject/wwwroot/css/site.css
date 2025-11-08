@@ -314,6 +314,7 @@ body {
 
     .form-control:focus {
         outline: none;
+        color: var(--text-primary);
         border-color: var(--primary);
         background: var(--bg-dark);
         box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);

@@ -184,15 +184,6 @@
                     Join Existing Lobby
                 </button>
 
-                <div style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-elevated); border-radius: 12px; border: 1px solid var(--border);">
-                    <h5 style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Want to Rejoin the Lobby</h5>
-                    <ul style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.8; padding-left: 1.25rem;">
-                        <li>Enter the same name as previously entered.</li>
-                        <li>Enter the Lobby Code.</li>
-                        <li>And you're good to go!</li>
-                    </ul>
-                </div>
-
                 <div id="rouletteLobbyInfo" style="display: none;">
                     <div class="lobby-info">
                         <div id="lobbyCodeDisplay" class="lobby-code-display"></div>
@@ -269,7 +260,11 @@
             lobbyCreatorId = creatorId;
 
             document.getElementById("lobbyCodeDisplay").innerText = currentLobbyCode;
-            document.getElementById("rouletteLobbyInfo").style.display = "block";
+            const lobbyInfoDiv = document.getElementById("rouletteLobbyInfo");
+            lobbyInfoDiv.style.display = "block";
+
+            // This line will smoothly scroll the user down to the lobby info
+            lobbyInfoDiv.scrollIntoView({ behavior: 'smooth' });
 
             const ul = document.getElementById('playerList');
             ul.innerHTML = "";
