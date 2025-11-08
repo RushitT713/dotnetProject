@@ -20,7 +20,7 @@ namespace dotnetProject.Hubs
         {
             var httpContext = Context.GetHttpContext();
             var playerId = httpContext?.Items["PlayerId"]?.ToString() ?? Guid.NewGuid().ToString("N");
-
+            await _walletService.GetOrCreatePlayerAsync(playerId, playerName);
             var lobby = PokerLobbies.GetOrAdd(lobbyCode, _ => new PokerLobby
             {
                 LobbyCode = lobbyCode,
@@ -217,6 +217,12 @@ namespace dotnetProject.Hubs
                     break;
 
                 case "raise":
+                    if (action.Amount <= 0)
+                    {
+                        await Clients.Caller.SendAsync("Error", "Invalid raise amount");
+                        return;
+                    }
+
                     var raiseAmount = Math.Min(action.Amount, player.Balance + player.CurrentBet);
                     if (raiseAmount <= game.CurrentBet)
                     {

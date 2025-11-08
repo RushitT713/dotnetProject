@@ -1,0 +1,241 @@
+﻿@model dotnetProject.Models.WalletViewModel
+@{
+    ViewData["Title"] = "My Wallet";
+}
+<link rel="stylesheet" href="~/css/site.css" />
+
+<style>
+    /* Add some specific styles for the history table */
+    .transaction-table {
+        width: 100%;
+        margin-top: 1.5rem;
+        border-collapse: collapse;
+    }
+
+        .transaction-table th, .transaction-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .transaction-table th {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .transaction-table td {
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+    .text-success {
+        color: var(--success) !important;
+        font-weight: 600;
+    }
+
+    .text-danger {
+        color: var(--danger) !important;
+        font-weight: 600;
+    }
+
+    /* --- NEW STYLES FOR AD LOADER --- */
+    #ad-loader-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(10, 14, 26, 0.95);
+        backdrop-filter: blur(5px);
+        display: none; /* Hidden by default */
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        color: var(--text-primary);
+        gap: 1.5rem;
+    }
+
+    .spinner {
+        width: 56px;
+        height: 56px;
+        border: 5px solid var(--border);
+        border-bottom-color: var(--primary);
+        border-radius: 50%;
+        display: inline-block;
+        box-sizing: border-box;
+        animation: spin 1s linear infinite;
+    }
+</style>
+
+<div id="ad-loader-overlay">
+    <div class="spinner"></div>
+    <p id="loader-text" style="font-size: 1.2rem; font-weight: 500;">Your ad is playing... (5s)</p>
+</div>
+
+<div class="lobby-container">
+    <div class="lobby-header fade-in">
+        <h1 style="font-family: 'Playfair Display', serif;">My Wallet</h1>
+        <p>Your balance and transaction history</p>
+    </div>
+
+    <div class="balance-display" style="max-width: 500px; margin: 2rem auto;">
+        <strong>Total Balance</strong>
+        <div>
+            <span style="font-size: 1.5rem;">₹</span><span id="balance">@Model.CurrentBalance.ToString("N0")</span>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <button id="btn-watch-ad" class="btn btn-primary" style="min-width: 250px; padding: 1rem 2rem;">
+            Watch Ad for ₹100
+        </button>
+    </div>
+
+    <div class="card" style="max-width: 1000px; margin: 2rem auto; background: var(--bg-card); border-radius: 16px;">
+        <div class="card-header" style="background: var(--bg-elevated); border-radius: 16px 16px 0 0;">
+            Transaction History
+        </div>
+        <div class="card-body" style="padding: 1.5rem;">
+            @if (Model.History.Count == 0)
+            {
+                <p style="color: var(--text-secondary); text-align: center;">No transactions found.</p>
+            }
+            else
+            {
+                <table class="transaction-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Game</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>New Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-history-body">
+                        @foreach (var tx in Model.History)
+                        {
+                            var amountClass = tx.AmountChange > 0 ? "text-success" : "text-danger";
+                            <tr class="tx-row">
+                                <td>@tx.CreatedAt.ToString("g")</td>
+                                <td>@tx.GameType</td>
+                                <td>@tx.Description</td>
+                                <td class="@amountClass">
+                                    @(tx.AmountChange > 0 ? "+" : "")@tx.AmountChange.ToString("N2")
+                                </td>
+                                <td>@tx.AmountAfter.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const adButton = document.getElementById('btn-watch-ad');
+        const adOverlay = document.getElementById('ad-loader-overlay');
+        const balanceEl = document.getElementById('balance');
+        const historyTableBody = document.getElementById('transaction-history-body');
+
+        adButton.addEventListener('click', () => {
+            // 1. Show the "ad" overlay
+            adOverlay.style.display = 'flex';
+            adButton.disabled = true;
+
+            // 2. Simulate ad watch time (5 seconds)
+            setTimeout(async () => {
+                try {
+                    // 3. Call the controller to get the reward
+                    const response = await fetch('/Wallet/WatchAdReward', { method: 'POST' });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // 4. Update balance on success
+                        const oldBalance = parseInt(balanceEl.textContent.replace(/,/g, ''));
+                        animateValue(balanceEl, oldBalance, data.newBalance, 500);
+
+                        // 5. Add new transaction to the top of the table
+                        addNewTransactionRow(data.reward, data.newBalance);
+
+                        showNotification(`+₹${data.reward} added to your balance!`, 'success');
+                    } else {
+                        showNotification(data.error || 'Ad reward failed.', 'error');
+                    }
+
+                } catch (err) {
+                    showNotification('An error occurred. Please try again.', 'error');
+                } finally {
+                    // 6. Hide overlay and re-enable button
+                    adOverlay.style.display = 'none';
+                    adButton.disabled = false;
+                }
+            }, 5000); // 5 second ad
+        });
+
+        function addNewTransactionRow(reward, newBalance) {
+            const newRow = document.createElement('tr');
+            newRow.className = 'tx-row';
+            newRow.style.opacity = 0; // For fade-in
+
+            const date = new Date().toLocaleString();
+
+            newRow.innerHTML = `
+                <td>${date}</td>
+                <td>General</td>
+                <td>Ad Watched: +₹${reward}</td>
+                <td class="text-success">+${reward.toFixed(2)}</td>
+                <td>${newBalance.toFixed(2)}</td>
+            `;
+
+            historyTableBody.prepend(newRow);
+            // Simple fade-in
+            setTimeout(() => newRow.style.opacity = 1, 100);
+        }
+
+        // Helper functions (you can move these to site.js later)
+        function animateValue(element, start, end, duration) {
+            if (start === end) return;
+            const range = end - start;
+            const increment = range / (duration / 16);
+            let current = start;
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    element.textContent = end.toLocaleString('en-US');
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current).toLocaleString('en-US');
+                }
+            }, 16);
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                background: ${type === 'error' ? 'var(--danger)' : 'var(--success)'};
+                color: white;
+                border-radius: 12px;
+                font-weight: 600;
+                z-index: 99999;
+                animation: fadeIn 0.3s ease;
+                box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+}

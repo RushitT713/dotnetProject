@@ -27,7 +27,7 @@ namespace dotnetProject.Controllers
                 ? new BlackjackGame()
                 : JsonConvert.DeserializeObject<BlackjackGame>(json);
 
-            SaveGame(game);
+            //SaveGame(game); // No need to save on get
             return game;
         }
 
@@ -58,6 +58,12 @@ namespace dotnetProject.Controllers
         {
             var playerId = GetPlayerId();
 
+            // --- Server-side validation ---
+            if (amount <= 0)
+            {
+                return Json(new { error = "Invalid bet amount" });
+            }
+
             // Check if player has sufficient balance
             if (!await _walletService.HasSufficientBalanceAsync(playerId, amount))
             {
@@ -70,18 +76,60 @@ namespace dotnetProject.Controllers
             var game = GetGame();
             game.StartNewRound(amount);
 
-            // Update balance from wallet
-            var newBalance = await _walletService.GetBalanceAsync(playerId);
-            game.PlayerBalance = (int)newBalance;
+            // --- START 3:2 BLACKJACK LOGIC ---
+            int playerScore = game.CalculateScore(game.PlayerHand);
+            int dealerScore = game.CalculateScore(game.DealerHand);
+
+            if (playerScore == 21)
+            {
+                game.IsGameOver = true;
+                string resultMessage;
+
+                if (dealerScore == 21)
+                {
+                    // Push - return bet to wallet
+                    await _walletService.AddBalanceAsync(playerId, game.CurrentBet, "Blackjack", "Push - Natural Blackjack");
+                    resultMessage = "Push. You both have Blackjack.";
+                }
+                else
+                {
+                    // Player wins 3:2 - add 1.5x winnings + original bet (total 2.5x)
+                    decimal payout = game.CurrentBet * 2.5m;
+                    await _walletService.AddBalanceAsync(playerId, payout, "Blackjack", $"Won: ₹{payout} (Natural 3:2)");
+                    resultMessage = "Blackjack! You win 3:2!";
+                }
+
+                var newBalance = await _walletService.GetBalanceAsync(playerId);
+                game.PlayerBalance = (int)newBalance;
+                SaveGame(game);
+
+                return Json(new
+                {
+                    playerHand = game.PlayerHand,
+                    dealerHand = game.DealerHand, // Reveal dealer hand
+                    playerScore = playerScore,
+                    dealerScore = dealerScore,
+                    balance = game.PlayerBalance,
+                    isGameOver = true,
+                    result = resultMessage
+                });
+            }
+            // --- END 3:2 BLACKJACK LOGIC ---
+
+            // Update balance from wallet (just reflects the bet)
+            var balanceAfterBet = await _walletService.GetBalanceAsync(playerId);
+            game.PlayerBalance = (int)balanceAfterBet;
 
             SaveGame(game);
 
+            // Standard response if no natural 21
             return Json(new
             {
                 playerHand = game.PlayerHand,
                 dealerHand = new[] { game.DealerHand[0], "??" },
                 playerScore = game.CalculateScore(game.PlayerHand),
-                balance = game.PlayerBalance
+                balance = game.PlayerBalance,
+                isGameOver = false
             });
         }
 

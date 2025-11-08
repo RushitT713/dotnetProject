@@ -30,7 +30,7 @@ namespace dotnetProject.Hubs
         {
             var httpContext = Context.GetHttpContext();
             var playerId = httpContext?.Items["PlayerId"]?.ToString() ?? Guid.NewGuid().ToString("N");
-
+            await _walletService.GetOrCreatePlayerAsync(playerId, playerName);
             var lobby = Lobbies.GetOrAdd(lobbyCode, _ => {
                 var newLobby = new LobbyInfo(
                     lobbyCode,
@@ -103,6 +103,12 @@ namespace dotnetProject.Hubs
 
             var player = lobby.Players.FirstOrDefault(p => p.ConnectionId == Context.ConnectionId);
             if (player == null) return;
+
+            if (incomingBet.Amount <= 0)
+            {
+                await Clients.Caller.SendAsync("BetRejected", "Invalid bet amount");
+                return;
+            }
 
             // Check balance from wallet (this is safe, it's in the hub scope)
             if (!await _walletService.HasSufficientBalanceAsync(playerId, incomingBet.Amount))
